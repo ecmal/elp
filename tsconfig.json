@@ -1,0 +1,24 @@
+{
+  "compilerOptions" : {
+    "declaration":true,
+    "module": "system",
+    "target": "es5",
+    "outDir":"./out/espm",
+    "inlineSourceMap":true,
+    "inlineSources":true,
+    "experimentalDecorators":true,
+    "noLib":true
+  },
+  "files":[
+    "./tsd/lib.es6.d.ts",
+    "./tsd/node.d.ts",
+    "./tsd/typescript.d.ts",
+    "./src/git/index.ts",
+    "./src/cmd/command.ts",
+    "./src/cmd/install.ts",
+    "./src/utils/fs.ts",
+    "./src/config.ts",
+    "./src/services.ts",
+    "./src/cli.ts"
+  ]
+}

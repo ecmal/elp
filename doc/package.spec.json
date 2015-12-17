@@ -1,0 +1,32 @@
+{
+  "name"       : "my-app",
+  "vendor"     : "mamble-inc",
+  "version"    : "0.0.1",
+  "registry"   : "github",
+  "repository" : {
+    "type"     : "git",
+    "url"      : "https://github.com/mamble-inc/my-app"
+  },
+  "directory" : {
+    "src"     : "src",
+    "out"     : "out",
+    "dep"     : "dep",
+    "dist"    : "dist"
+  },
+  "bundle"    : {
+    "bundle-name":"module/name"
+  },
+  "modules"   : {
+    "a" : {
+      "name" : "project",
+      "registry" : "github",
+      "dependencies" : {
+        "b"  : "1.2.5"
+      }
+    }
+  },
+  "dependencies" : {
+    "a" : "npm:gago#1.0.0",
+    "b" : "1.0.0"
+  }
+}
