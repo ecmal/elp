@@ -1,13 +1,11 @@
 {
-  "name"    : "espm",
-  "vendor"  : "ecmal",
-  "version" : "0.0.1",
-  "bin"     : "./index.js",
-  "scripts" : {
-    "espm"         :"tsc -w -p .",
-    "http"         :"tsc -w -p ./lib/http",
-    "runtime"      :"tsc -w -p ./lib/runtime",
-    "runtime-test" :"tsc -w -p ./lib/runtime-test",
-    "serve"        :"http-server"
+  "name"            : "espm",
+  "vendor"          : "ecmal",
+  "version"         : "0.0.1",
+  "bin"             : "./index.js",
+  "scripts"         : {
+    "watch"         : "node ./build/watch.js",
+    "build"         : "node ./build/build.js",
+    "serve"         : "http-server"
   }
 }
