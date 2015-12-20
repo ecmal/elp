@@ -29,7 +29,6 @@ exports.transpile = function transpileModule(input, transpileOptions) {
             return fileName === ts.normalizeSlashes(inputFileName) ? sourceFile : undefined
         },
         writeFile: function (name, text, writeByteOrderMark) {
-            console.info(name);
             if (ts.fileExtensionIs(name, ".map")) {
                 sourceMapText = text;
             } else

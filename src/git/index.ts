@@ -1,8 +1,6 @@
 import * as ChildProcess from 'child_process';
 import * as Path from 'path';
 
-
-
 export class Git {
     private _baseDir:string;
     private _command:string = 'git';

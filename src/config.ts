@@ -16,7 +16,6 @@ export class Config {
         username : process.env.USER,
         password : ''
     };
-
     constructor(){
         this.name = 'espm';
         this.home = FS.resolve(this.env.home,'.'+this.name);
@@ -24,7 +23,6 @@ export class Config {
         this.dirname = __dirname;
         this.filename = __filename;
     }
-
     private checkHome(){
         if(!FS.isDir(this.home)){
             FS.createDir(this.home);

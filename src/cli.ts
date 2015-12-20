@@ -12,5 +12,3 @@ config.load().then(config=>{
         return cli('espm','1.0.0');
     })
 }).catch(e=>console.error(e.stack));
-
-

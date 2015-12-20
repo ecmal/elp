@@ -40,3 +40,7 @@ fs.removeDirRecursive = function removeDirRecursive(path) {
         fs.rmdirSync(path);
     }
 };
+fs.copyFile = function makeDirRecursive(fromPath,toPath) {
+    fs.makeDirRecursive(path.dirname(toPath));
+    fs.writeFileSync(toPath,fs.readFileSync(fromPath));
+};
