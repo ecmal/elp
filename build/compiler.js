@@ -14,9 +14,9 @@ exports.transpile = function transpileModule(input, transpileOptions) {
     // if jsx is specified then treat file as .tsx
     var inputFileName = transpileOptions.fileName || (options.jsx ? "module.tsx" : "module.ts");
     var sourceFile = ts.createSourceFile(inputFileName, input, options.target);
-    if (transpileOptions.moduleName) {
+    /*if (transpileOptions.moduleName) {
         sourceFile.moduleName = transpileOptions.moduleName;
-    }
+    }*/
     sourceFile.renamedDependencies = transpileOptions.renamedDependencies;
     var newLine = ts.getNewLineCharacter(options);
     // Output

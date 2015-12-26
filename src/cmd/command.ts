@@ -113,7 +113,9 @@ export class Cli {
     })
     version:boolean=false;
 
-    execute(){
+    protected cwd:string;
+
+    execute(...args){
         if(this.version){
             console.info(`${Cli.title} ${Cli.version}`);
         } else
@@ -186,6 +188,7 @@ export default (name,version)=>{
             }
         }
     }
+    cmd.cwd = process.cwd();
     if(cmd.version || cmd.help){
         Cli.prototype.execute.call(cmd);
     }else{

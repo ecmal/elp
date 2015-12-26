@@ -11,7 +11,7 @@ var modules = [];
 modNames.forEach(function(m){
     if(m!='.bin') {
         var modRoot = path.resolve(modDir, m);
-        var modLib = path.resolve(libDir, m);
+        var modLib = path.resolve(outDir, m);
         var modSrc  = path.resolve(modRoot,'lib');
         if(!fs.existsSync(modSrc)){
             modSrc = path.resolve(modRoot,'src');
@@ -30,7 +30,7 @@ modNames.forEach(function(m){
                 fs.renameSync(f,p);
             } else
             if(mod.file.match(/^.*\.d\.ts$/gi)){
-                p = path.resolve(libDir,mod.name);
+                p = path.resolve(outDir,mod.name);
                 fs.makeDirRecursive(path.dirname(p));
                 console.info(f,'to',p);
                 fs.renameSync(f,p);
@@ -64,7 +64,7 @@ modules.forEach(function(m){
                 inlineSources:true
             }
         });
-        var libFile = path.resolve(libDir,m.name).replace(/^(.*)(\.ts)$/,'$1.d.ts');
+        var libFile = path.resolve(outDir,m.name).replace(/^(.*)(\.ts)$/,'$1.d.ts');
         var outFile = path.resolve(outDir,m.name).replace(/^(.*)(\.ts)$/,'$1.js');
         fs.makeDirRecursive(path.dirname(libFile));
         fs.makeDirRecursive(path.dirname(outFile));

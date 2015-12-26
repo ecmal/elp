@@ -1,5 +1,6 @@
 import './cmd/init';
 import './cmd/install';
+import './cmd/compile';
 // remove me
 import './cmd/test';
 

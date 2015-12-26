@@ -17,7 +17,7 @@ function compileSource(event,filename) {
         var srcFile = path.resolve(srcDir, filename);
         if (srcFile.match(/^(.*)(\.ts)$/)) {
             var outFile = path.resolve(outDir, 'espm', filename).replace(/^(.*)(\.ts)$/, '$1.js');
-            var libFile = path.resolve(libDir, 'espm', filename).replace(/^(.*)(\.ts)$/, '$1.d.ts');
+            var libFile = path.resolve(outDir, 'espm', filename).replace(/^(.*)(\.ts)$/, '$1.d.ts');
             if (fs.existsSync(srcFile)) {
                 console.info('CHANGE', filename);
                 var source = fs.readFileSync(srcFile);
