@@ -5,6 +5,7 @@ import {settings} from "node/cluster";
 const ts = require('typescript');
 const crypto = require('crypto');
 const ScriptSnapshot:any = ts.ScriptSnapshot;
+const NewLineKind:any = ts.NewLineKind;
 
 export class Script {
 
@@ -24,7 +25,9 @@ export class Script {
     }
 }
 export class Compiler {
-
+    getNewLine(){
+       return '\n'
+    }
     getScriptFileNames() {
         return Object.keys(this.scripts);
     }
@@ -49,16 +52,25 @@ export class Compiler {
         return this.sourceDir;
     }
     getCompilationSettings(){
-        return {
-            target:ts.ScriptTarget.ES5,
-            declaration: true,
-            module: ts.ModuleKind.System,
-            experimentalDecorators: true,
-            sourceRoot:this.sourceDir,
-            sourceMap:true,
-            //inlineSourceMap: true,
-            //inlineSources: true
-        };
+        if(this.release){
+            return {
+                target      : ts.ScriptTarget.ES5,
+                declaration : true,
+                module      : ts.ModuleKind.System,
+                experimentalDecorators: true,
+                inlineSourceMap:true,
+                inlineSources:true
+            };
+        }else{
+            return {
+                target      : ts.ScriptTarget.ES5,
+                declaration : true,
+                module      : ts.ModuleKind.System,
+                experimentalDecorators: true,
+                sourceRoot:this.sourceDir,
+                sourceMap:true
+            };
+        }
     }
     getDefaultLibFileName(options) {
         return 'runtime/index.d.ts';
@@ -107,6 +119,7 @@ export class Compiler {
         return this.settings.version;
     };
 
+    private release:boolean;
     private settings:Package;
     private service:any;
     private scripts:any;
@@ -154,9 +167,6 @@ export class Compiler {
             }
         });
     }
-
-
-
     watch(pack:Package){
         this.compile(pack);
         console.info('Watch : '+this.projectName);
@@ -169,16 +179,25 @@ export class Compiler {
             }
         });
     }
-    compile(pack:Package){
+    compile(pack:Package,release:boolean=false){
+        var settingsDir = FileSystem.resolve(pack.outputDir,pack.name);
+        var settingsFile = FileSystem.resolve(settingsDir,'package.json');
+
+        this.release = release;
         this.settings = pack;
+
         this.initRuntime();
         this.loadDefinitions();
         this.loadSources();
-        this.settings.write(FileSystem.resolve(this.outputDir,`${this.projectName}/package.json`));
+
         console.info('Compile : '+this.projectName);
+
+        FileSystem.removeDir(settingsDir);
+        this.settings.write(settingsFile);
         this.getSourceFileNames().forEach(uri=>{
             this.compileSource(uri,true)
         });
+        return settingsFile;
     }
     compileSource(uri,reload=true){
         console.info('  ',uri);

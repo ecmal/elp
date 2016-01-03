@@ -1,10 +1,24 @@
 import FileSystem from "../utils/fs";
-import {Project} from "../compiler/project";
+
 export class Package {
+    static read(path:string){
+        let pack;
+        path = FileSystem.resolve(path);
+        if(!FileSystem.exists(path)){
+            console.error(`Invalid project path "${path}"`);
+        }
+        if(FileSystem.isDir(path)){
+            path = FileSystem.resolve(path,'package.json');
+        }
+        if(FileSystem.isFile(path)){
+            pack = new Package(path);
+        }
+        return pack;
+    }
 
     private internal:any;
     private json:any;
-    private path:string;
+    public path:string;
 
     get name():string {
         return this.json.name;
@@ -12,7 +26,12 @@ export class Package {
     set name(v:string){
         this.json.name=v;
     }
-
+    get registry():string{
+        return this.json.registry;
+    }
+    set registry(v:string){
+        this.json.registry = v;
+    }
     get vendor(){
         return this.json.vendor;
     }

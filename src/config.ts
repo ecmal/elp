@@ -1,4 +1,7 @@
 import FS from './utils/fs';
+import {Registry} from "./registry/registry";
+import {BitbucketRegistry} from "./registry/registry";
+import {GithubRegistry} from "./registry/registry";
 
 export class Config {
 
@@ -35,10 +38,14 @@ export class Config {
             this.settings = FS.readJson(this.config);
         }
     }
-    private checkRegistries(){}
+    private checkRegistries(){
+        Registry.add('bitbucket',BitbucketRegistry,this);
+        Registry.add('github',GithubRegistry,this);
+    }
     private checkPlugins(){}
 
     load():Promise<Config>{
+
         this.checkHome();
         this.checkConfig();
         this.checkPlugins();
