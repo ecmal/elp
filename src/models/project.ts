@@ -1,6 +1,7 @@
 import FileSystem from "../utils/fs";
 import {Repository} from "../utils/git";
 import {Compiler} from "../compiler";
+import {stat} from "node/fs";
 
 const crypto = require('crypto');
 const FILE:symbol = Symbol('file');
@@ -249,12 +250,23 @@ export class Project {
         var c:Repository=this[REPO_RELEASE];
         if(!c && this.git){
             c = this[REPO_RELEASE] = new Repository(this.outputDir);
-            if(c.init()){
-                c.addRemote('origin',this.dirname);
-                c.exec('fetch','origin');
-                c.exec('checkout','-b','release','origin/release');
-                c.clear()
+            var refs = this.git.refs();
+            if(!Repository.isGitDir(this.outputDir)){
+                this.git.exec('worktree','prune');
+                if(refs.heads.release){
+                    this.git.exec('worktree','add',this.outputDir,'release');
+                }else{
+                    var tempName = 'temp-'+parseInt(Math.random()*1000);
+                    this.git.exec('worktree','add','-b',tempName,this.outputDir);
+                    console.info(c.exec('checkout','--orphan','release').output);
+                    this.git.exec('branch','-d',tempName);
+                }
+
+                var refs = c.refs();
+                console.info(refs);
+
             }
+
         }
         return c;
     }
@@ -325,7 +337,7 @@ export class Project {
     }
     public publish(){
         this.clean();
-        this.release.status();
+        this.release.clear();
         this.readGit();
         this.compileSources();
         this.writeSources();
@@ -350,13 +362,13 @@ export class Project {
                 this.release.exec('rm',...deleted);
             }
             console.info(this.release.exec('commit','-am','Publishing Changes').output);
-            if(this.release.status().clear){
-                console.info(this.release.exec('push').output);
+            status = this.release.status();
+            if(status.clear){
+                console.info(this.release.exec('push','-u','origin','release').output);
             }
         }else{
             console.info('No Changes');
         }
-
     }
     public clean(){
         FileSystem.removeDir(this.outputDir);
@@ -364,10 +376,10 @@ export class Project {
     public toString(full=false):string{
         return `Project(${this.name}${full?','+JSON.stringify(this.config,null,2):''})`;
     }
-    protected inspect(){
+
+    private inspect(){
         return this.toString(true)
     }
-
     private readFs(){
         this.readDependencies();
         this.readSourcesFromFs();

@@ -1,29 +1,13 @@
 import {Project} from "./models/project";
-import ts from "typescript/typescript";
+import ts from "compiler/typescript";
 import {Source} from "./models/project";
 import {FileSystem} from "./utils/fs";
+import * as crypto from "node/crypto";
 
 
-const crypto = require('crypto');
-const ScriptSnapshot:any = ts.ScriptSnapshot;
-const NewLineKind:any = ts.NewLineKind;
 
-export class Script {
-    public uri:string;
-    public version:string;
-    public snapshot:any;
-    constructor(uri,content?){
-        this.uri = uri;
-        if(content) {
-            this.update(content);
-        }
-    }
-    update(content){
-        this.version = crypto.createHash('md5').update(content).digest("hex");
-        this.snapshot = ScriptSnapshot.fromString(content);
-    }
-}
 export class Compiler {
+
     getNewLine(){
        return '\n'
     }
@@ -40,7 +24,7 @@ export class Compiler {
     getScriptSnapshot(file) {
         var source:Source = this.sources[Source.getName(file)];
         if(source){
-            return ScriptSnapshot.fromString(source.content)
+            return ts.ScriptSnapshot.fromString(source.content)
         }
     }
     getCurrentDirectory() {

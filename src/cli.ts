@@ -4,8 +4,6 @@ import './cmd/compile';
 import './cmd/publish';
 import './cmd/validate';
 import './cmd/status';
-// remove me
-import './cmd/test';
 
 import cli from './cmd/command';
 import config from './config';
@@ -17,6 +15,4 @@ config.load().then(config=>{
     })
 }).catch(e=>console.error(e.stack));
 
-
-import TS from "typescript/typescript"
 

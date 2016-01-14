@@ -83,19 +83,40 @@ export class Remote extends Entity {
 export class Remotes {
 
 }
-export class Status {
+class Status {
 
     local   : string;
     remote  : string;
+    ahead   : number;
     changes : any;
+    initial : boolean;
     clear   : boolean;
 
     constructor(status) {
         var line,item,whitespace = /\s+/;
         var lines = status.trim().split('\n');
-        var branch  = lines.shift().match(/^\#\#\s*([^.]*)\.\.\.(.*)\s*$/);
-        this.local  = branch[1];
-        this.remote = branch[2];
+        var thead = lines.shift().trim();
+        var initial = thead.match(/##\sInitial\scommit\son\s(.*)\s*/)
+        if(initial){
+            this.initial = true;
+            this.local = initial[1]
+        }else{
+            thead = thead.replace('...',' ');
+            thead = thead.replace(/(#|\s)+/,'');
+            thead = thead.replace(/\[ahead\s(\d+)\]/,'$1');
+            thead = thead.trim().split(/\s+/);
+            if(thead[0]){
+                this.local = thead[0];
+            }
+            if(thead[1]){
+                this.remote = thead[1];
+            }
+            if(thead[2]){
+                this.ahead = thead[2]?parseInt(thead[2]):0;
+            }
+
+        }
+
         var changes = {};
         while (line = lines.shift()) {
             item = {};
@@ -409,4 +430,3 @@ export class Repository {
         return this.toString()
     }
 }
-
