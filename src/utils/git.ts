@@ -272,6 +272,17 @@ export class Repository {
             return false;
         }
     }
+    clear(){
+        FileSystem.readDir(this.path,false,true).forEach(f=>{
+            if(f!=this.base){
+                if(FileSystem.isDir(f)){
+                    FileSystem.removeDir(f);
+                }else{
+                    FileSystem.removeFile(f);
+                }
+            }
+        })
+    }
     remote(name):string{
         return this.exec('remote','show',name).output;
     }

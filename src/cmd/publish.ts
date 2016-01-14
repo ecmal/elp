@@ -22,6 +22,6 @@ import {Source} from "../models/project";
 })
 export class Publish extends Cli {
     execute(path:string=this.cwd){
-        Project.read(path).compile();
+        Project.read(path).publish();
     }
 }

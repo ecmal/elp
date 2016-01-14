@@ -246,10 +246,15 @@ export class Project {
         return c;
     }
     get release():Repository{
-        var c=this[REPO_RELEASE];
-        if(!c){
+        var c:Repository=this[REPO_RELEASE];
+        if(!c && this.git){
             c = this[REPO_RELEASE] = new Repository(this.outputDir);
-            console.info('RELEASE REPO',this.outputDir,c.init());
+            if(c.init()){
+                c.addRemote('origin',this.dirname);
+                c.exec('fetch','origin');
+                c.exec('checkout','-b','release','origin/release');
+                c.clear()
+            }
         }
         return c;
     }
@@ -312,25 +317,50 @@ export class Project {
         }
         return this;
     }
-    public read(branch='HEAD'){
-        this.readDependencies();
-        this.readSources(branch,true);
-        return Object.keys(this.sources);
-    }
     public compile(){
-        this.read();
-        FileSystem.removeDir(this.outputDir);
-        for(var s:Source of this.sourcesAll){
-            this.compiler.addSource(s);
-        }
-        this.compiler.compile();
-        this.write();
-    }
-    public write(){
+        this.clean();
+        this.readFs();
+        this.compileSources();
         this.writeSources();
-        //console.info(this.release.status());
     }
+    public publish(){
+        this.clean();
+        this.release.status();
+        this.readGit();
+        this.compileSources();
+        this.writeSources();
+        var status = this.release.status();
+        var changes = status.changes;
+        var added = [], deleted = [];
+        if(!status.clear){
+            console.info(status);
+            for(var c in changes){
+                var change = changes[c];
+                if(change.untracked){
+                    added.push(change.path);
+                }
+                if(change.deleted){
+                    deleted.push(change.path);
+                }
+            }
+            if(added.length){
+                this.release.exec('add',...added);
+            }
+            if(deleted.length){
+                this.release.exec('rm',...deleted);
+            }
+            console.info(this.release.exec('commit','-am','Publishing Changes').output);
+            if(this.release.status().clear){
+                console.info(this.release.exec('push').output);
+            }
+        }else{
+            console.info('No Changes');
+        }
 
+    }
+    public clean(){
+        FileSystem.removeDir(this.outputDir);
+    }
     public toString(full=false):string{
         return `Project(${this.name}${full?','+JSON.stringify(this.config,null,2):''})`;
     }
@@ -338,15 +368,25 @@ export class Project {
         return this.toString(true)
     }
 
+    private readFs(){
+        this.readDependencies();
+        this.readSourcesFromFs();
+        return Object.keys(this.sources);
+    }
+    private readGit(branch?){
+        this.readDependencies();
+        this.readSourcesFromGit(branch);
+        return Object.keys(this.sources);
+    }
     private readSources(branch?,main?){
         if(main){
             this.readSourcesFromGit(branch,main);
         }else{
-            this.readSourcesFromFs(branch,main);
+            this.readSourcesFromFs(main);
         }
         //this.readSourcesFromFs(branch,main);
     }
-    private readSourcesFromGit(branch='HEAD',main?){
+    private readSourcesFromGit(branch='HEAD',main?:boolean=true){
         if(this.git){
             var files = this.git.readDir(branch,this.dirs.source);
             for(var f in files){
@@ -363,7 +403,7 @@ export class Project {
             }
         }
     }
-    private readSourcesFromFs(branch?,main?){
+    private readSourcesFromFs(main?){
         FileSystem.readDir(this.sourceDir,true).forEach(f=>{
             var file = {
                 path : FileSystem.relative(this.sourceDir,f)
@@ -385,29 +425,25 @@ export class Project {
         var deps = {};
         FileSystem.readDir(this.vendorDir,false,true).forEach(dir=>{
             var project = Project.read(dir);
-            project.patch({
-                directories : {
-                    source  : '.',
-                    vendor  : '..'
-                }
-            });
-            project.readSources(false,false);
             if(project.name != this.name){
+                project.patch({
+                    directories : {
+                        source  : '.',
+                        vendor  : '..'
+                    }
+                });
+                project.readSourcesFromFs(false);
                 deps[project.name] = project;
             }
         });
         this[DEPS] = deps;
     }
-    private prepareReleaseDir(){
-        FileSystem.removeDir(this.outputDir);
-        this.release.addRemote('origin',this.dirname);
-        this.release.exec('fetch','origin');
-        this.release.exec('checkout','-b','release','origin/release');
-        console.info(this.release.exec('status').output);
-        //this.release.exec('rm','-r','.');
-        //var refs = this.git.refs();
-        //var remotes = this.git.remotes();
-        //console.info(remotes);
+
+    private compileSources(){
+        for(var s:Source of this.sourcesAll){
+            this.compiler.addSource(s);
+        }
+        this.compiler.compile();
     }
     private writeSources(){
         //this.prepareReleaseDir();

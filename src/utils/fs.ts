@@ -49,7 +49,7 @@ export class FileSystem {
                 if(this.fs.lstatSync(curPath).isDirectory()) { // recurse
                     this.removeDir(curPath);
                 } else { // delete file
-                    this.fs.unlinkSync(curPath);
+                    this.removeFile(curPath);
                 }
             });
             this.fs.rmdirSync(path);
@@ -99,6 +99,9 @@ export class FileSystem {
         }else {
             this.fs.mkdirSync(path);
         }
+    }
+    static removeFile(path){
+        this.fs.unlinkSync(path)
     }
     static copyFile(fromPath,toPath) {
         this.writeFile(toPath,this.readFile(fromPath));
