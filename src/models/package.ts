@@ -66,6 +66,7 @@ export class Package {
     set outputDir(v:string){
         this.directories.output = FileSystem.relative(this.dirname,v);
     }
+
     patch(props:any){
         for(var key in props){
             this.json[key] = props[key];
@@ -78,6 +79,7 @@ export class Package {
             this.read(path);
         }
     }
+
     clone():Package{
         return new Package(this.path,JSON.parse(JSON.stringify(this.json)));
     }

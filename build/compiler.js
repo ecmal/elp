@@ -1,4 +1,4 @@
-var ts = require('../out/typescript/typescript.js');
+var ts = require('typescript');
 exports.ModuleKind = ts.ModuleKind;
 exports.transpile = function transpileModule(input, transpileOptions) {
     const options = transpileOptions.compilerOptions ? ts.clone(transpileOptions.compilerOptions) : getDefaultCompilerOptions();

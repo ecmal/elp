@@ -208,14 +208,16 @@ export class Compiler {
             }
         }
         var result = this.service.getEmitOutput(uri);
-        if(!result.emitSkipped){
+        if(result.emitSkipped){
             this.logErrors(uri);
+        }else{
+            result.outputFiles.forEach(o=>{
+                var file = FileSystem.resolve(this.outputDir,o.name);
+                console.error('    to ',o.name);
+                FileSystem.writeFile(file,o.text);
+            })
         }
-        result.outputFiles.forEach(o=>{
-            var file = FileSystem.resolve(this.outputDir,o.name);
-            console.error('    to ',o.name);
-            FileSystem.writeFile(file,o.text);
-        })
+
     }
 
     logErrors(fileName: string) {

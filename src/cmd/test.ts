@@ -154,7 +154,7 @@ class GithubService {
 
     search(query){
         this.api.searchRepo(query).then(r=>{
-            GithubService.printTable(r.items,{
+            GithubService.printTable(<any>r.items,{
                 name            : 'Name',
                 full_name       : 'Url',
                 description     : 'Description'

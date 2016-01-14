@@ -3,7 +3,7 @@ import {Option} from './command';
 import {Cli} from "./command";
 import {FileSystem} from "../utils/fs";
 import {Compiler} from "../compiler/compiler";
-import {Package} from "../models/package";
+import {Project} from "../models/project";
 
 @Command({
     title  : 'Compile Project',
@@ -33,10 +33,9 @@ export class Compile extends Cli {
     })
     output:boolean=false;
 
-    private compiler:Compiler = new Compiler();
-
     execute(path:string=this.cwd){
-        let pack;
+        Project.read(path).compile();
+        /*let pack;
         path = FileSystem.resolve(path);
         if(!FileSystem.exists(path)){
             console.error(`Invalid project path "${path}"`);
@@ -56,6 +55,7 @@ export class Compile extends Cli {
             this.compiler.watch(pack);
         }else{
             this.compiler.compile(pack);
-        }
+        }*/
     }
+
 }
