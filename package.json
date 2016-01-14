@@ -1,7 +1,7 @@
 {
   "name": "nesp",
   "vendor": "ecmal",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Sergey Mamyan <sergey.mamyan@gmail.com>",
   "homepage": "https://bitbucket.org/ecmal/espm#readme",
   "license": "BSD-3-Clause",
