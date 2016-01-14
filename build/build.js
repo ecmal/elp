@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var compiler = require('./compiler');
 var fs = require('fs');
 var path = require('path');

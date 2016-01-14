@@ -1,11 +1,21 @@
 {
-  "name"            : "espm",
-  "vendor"          : "ecmal",
-  "version"         : "0.0.1",
-  "bin"             : "./index.js",
-  "scripts"         : {
-    "watch"         : "node ./build/build.js -w",
-    "build"         : "node ./build/build.js",
-    "serve"         : "http-server"
+  "name": "nesp",
+  "vendor": "ecmal",
+  "version": "0.0.3",
+  "author": "Sergey Mamyan <sergey.mamyan@gmail.com>",
+  "homepage": "https://bitbucket.org/ecmal/espm#readme",
+  "license": "BSD-3-Clause",
+  "description": "Node ecma script packager",
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/ecmal/espm.git"
+  },
+  "bin": {
+    "nesp":"./index.js",
+    "espm":"./index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   }
 }

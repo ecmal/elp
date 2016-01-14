@@ -4,8 +4,6 @@ import {Source} from "./models/project";
 import {FileSystem} from "./utils/fs";
 import * as crypto from "node/crypto";
 
-
-
 export class Compiler {
 
     getNewLine(){
