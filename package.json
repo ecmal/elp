@@ -1,21 +1,15 @@
 {
-  "name": "nesp",
+  "name": "elp",
   "vendor": "ecmal",
-  "version": "0.0.4",
+  "version": "0.0.1",
   "author": "Sergey Mamyan <sergey.mamyan@gmail.com>",
-  "homepage": "https://bitbucket.org/ecmal/espm#readme",
-  "license": "BSD-3-Clause",
-  "description": "Node ecma script packager",
+  "homepage": "https://github.com/ecmal/elp#readme",
+  "license": "ISC",
+  "description": "Ecmal package manager",
   "repository": {
     "type": "git",
-    "url": "https://bitbucket.org/ecmal/espm.git"
+    "url": "https://github.com/ecmal/elp.git"
   },
-  "bin": {
-    "nesp":"./index.js",
-    "espm":"./index.js"
-  },
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+  "bin"  : "index.js",
+  "main" : "index.js"
 }
