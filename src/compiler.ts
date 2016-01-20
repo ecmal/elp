@@ -1,6 +1,6 @@
 import {Project} from "./models/project";
 import ts from "compiler/typescript";
-import {Source} from "./models/project";
+import {Source} from "./models/source";
 import {FileSystem} from "./utils/fs";
 import * as crypto from "node/crypto";
 

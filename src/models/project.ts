@@ -1,7 +1,8 @@
 import FileSystem from "../utils/fs";
 import {Repository} from "../utils/git";
 import {Compiler} from "../compiler";
-import {stat} from "node/fs";
+import {Source} from "./source"; import {stat} from "node/fs";
+
 
 const crypto = require('crypto');
 const FILE:symbol = Symbol('file');
@@ -11,171 +12,13 @@ const SOURCES:symbol = Symbol('sources');
 const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
-const EXTS = {
-    '.d.ts'     : 'definition',
-    '.ts'       : 'source',
-    '.js.map'   : 'map',
-    '.js'       : 'script'
-};
+
 
 type Sources = {[k:string]:Source};
 type Config = {[k:string]:any};
 type Deps = {[k:string]:Project};
 
-export class Source {
-    static isResource(ext):boolean{
-        return ['.ts','.d.ts','.js','.js.map'].indexOf(ext)<0;
-    }
-    static getHash(content){
-        return crypto.createHash('md5').update(content).digest("hex");
-    }
-    static getName(path){
-        var exts = Object.keys(EXTS);
-        for(var e of exts){
-            var i = path.lastIndexOf(e);
-            if(i>0 && i==path.length-e.length){
-                return path.substring(0,i)
-            }
-        }
-        if(path.lastIndexOf('.')>0){
-            return path.substring(0,path.lastIndexOf('.'));
-        }else{
-            return path;
-        }
 
-    }
-    static getExt(path){
-        var exts = Object.keys(EXTS);
-        for(var e of exts){
-            var i = path.lastIndexOf(e);
-            if(i==path.length-e.length){
-                return e;
-            }
-        }
-        if(path.lastIndexOf('.')>0){
-            return path.substring(path.lastIndexOf('.'));
-        }
-    }
-    static getType(path){
-        var exts = Object.keys(EXTS);
-        for(var e of exts){
-            var i = path.lastIndexOf(e);
-            if(i==path.length-e.length){
-                return EXTS[e];
-            }
-        }
-        return 'resource'
-    }
-    public name:string;
-    public project:string;
-    public files:any;
-    public main:boolean;
-    get uri(){
-        return this.project+'/'+this.name;
-    }
-    get ts(){
-        return this.files['.ts'];
-    }
-    get js(){
-        return this.files['.js'];
-    }
-    get tsx(){
-        return this.files['.tsx']
-    }
-    get tsd(){
-        return this.files['.d.ts']
-    }
-    get map(){
-        return this.files['.js.map'];
-    }
-    get version(){
-        var file = (this.ts || this.tsx || this.tsd);
-        if(file && file.content){
-            return String(file.hash);
-        }
-    }
-    get content(){
-        var file = (this.ts || this.tsx || this.tsd);
-        if(file && file.content){
-            return file.content.toString();
-        }
-    }
-    get script(){
-        return this.files['.js'];
-    }
-
-    get resources(){
-        return Object.keys(this.files).filter(k=>Source.isResource(k)).map(k=>this.files[k])
-    }
-    get compilable(){
-        return !!(this.files['.ts'] || this.files['.tsx'])
-    }
-    constructor(project:string,name:string,main=true){
-        this.main = main;
-        this.project = project;
-        this.name = name;
-        this.files = {};
-    }
-    mapTo(dir){
-        var map = JSON.parse(this.map.content.toString());
-        delete map.sourceRoot;
-        map.sources = map.sources.map(s=>{
-            return s.replace(this.project,'.')+(this.ts||this.tsx).ext;
-        });
-        map.sourcesContent = map.sources.map((s:string)=>{
-            return FileSystem.readFile(FileSystem.resolve(dir,s)).toString();
-        });
-        map.sources = map.sources.map(s=>{
-            return s.split('/').pop();
-        });
-        this.files['.js.map'].content = JSON.stringify(map);
-    }
-    addFile(file){
-        var old = this.files[file.ext];
-        if(!old){
-            old = this.files[file.ext] = {};
-        }
-        for(var i in file){
-            old[i] = file[i];
-        }
-        old.size = old.content.length;
-        old.hash = Source.getHash(old.content);
-    }
-
-    toString(full:boolean=false){
-        var fStr = '';
-        if(full){
-            for(var f in this.files){
-                var file = this.files[f];
-                fStr+=`\n  ${[
-                    file.ext,
-                    file.hash,
-                    file.content.length
-                ].join('\t')}`;
-            }
-        }
-        return `Source('${this.uri}',${this.main?'Y':'N'},[${full?fStr+'\n':Object.keys(this.files).join(' ')}])`
-    }
-    toMetadata(){
-        var meta = {
-            name    : this.name,
-            version : this.version,
-            size    : this.js.size,
-            hash    : this.js.hash,
-            files   : {}
-        };
-        Object.keys(this.files).map(r=>(meta.files[r]={
-            ext     : this.files[r].ext,
-            hash    : this.files[r].hash,
-            size    : this.files[r].size,
-            sha     : this.files[r].sha
-        }));
-        return meta;
-    }
-    protected inspect(){
-        return this.toString();
-    }
-}
 export class Project {
 
     static read(path:string):Project{
@@ -267,6 +110,8 @@ export class Project {
 
             }
 
+        }else{
+            console.info("NOT RELEASE",this.dirname,Repository.isGitDir(this.dirname))
         }
         return c;
     }
@@ -337,11 +182,30 @@ export class Project {
     }
     public publish(){
         this.clean();
-        this.release.clear();
+
+        var stats  = this.git.status();
+        var local  = stats.local;
+        var remote = (()=>{
+            var path = stats.remote.split('/');
+            return {
+                name    : path[0],
+                branch  : path[1],
+            }
+        })();
+
+        var name = 'T'+parseInt(Math.random()*1000);
+        this.git.exec('worktree','prune');
+        this.git.exec('worktree','add',this.outputDir,'-b',name);
+
+        var release = new Repository(this.outputDir);
+        release.clear();
+        release.head(`refs/release/${local}`);
+
+        this.git.exec('branch','-d',name);
         this.readGit();
         this.compileSources();
         this.writeSources();
-        var status = this.release.status();
+        var status = release.status();
         var changes = status.changes;
         var added = [], deleted = [];
         if(!status.clear){
@@ -356,15 +220,15 @@ export class Project {
                 }
             }
             if(added.length){
-                this.release.exec('add',...added);
+                release.exec('add',...added);
             }
             if(deleted.length){
-                this.release.exec('rm',...deleted);
+                release.exec('rm',...deleted);
             }
-            console.info(this.release.exec('commit','-am','Publishing Changes').output);
-            status = this.release.status();
+            console.info(release.exec('commit','-am','Publishing Changes').output);
+            status = release.status();
             if(status.clear){
-                console.info(this.release.exec('push','-u','origin','release').output);
+                console.info(this.release.exec('push','-u',remote.name,`refs/release/${local}:refs/release/${remote.branch}`).output);
             }
         }else{
             console.info('No Changes');
@@ -435,19 +299,21 @@ export class Project {
     }
     private readDependencies(){
         var deps = {};
-        FileSystem.readDir(this.vendorDir,false,true).forEach(dir=>{
-            var project = Project.read(dir);
-            if(project.name != this.name){
-                project.patch({
-                    directories : {
-                        source  : '.',
-                        vendor  : '..'
-                    }
-                });
-                project.readSourcesFromFs(false);
-                deps[project.name] = project;
-            }
-        });
+        if(FileSystem.isDir(this.vendorDir)){
+            FileSystem.readDir(this.vendorDir,false,true).forEach(dir=>{
+                var project = Project.read(dir);
+                if(project.name != this.name){
+                    project.patch({
+                        directories : {
+                            source  : '.',
+                            vendor  : '..'
+                        }
+                    });
+                    project.readSourcesFromFs(false);
+                    deps[project.name] = project;
+                }
+            });
+        }
         this[DEPS] = deps;
     }
 
@@ -473,8 +339,10 @@ export class Project {
         s.mapTo(this.sourceDir);
         for(var t of ['tsd','js','map']){
             let file = s[t];
-            var path = FileSystem.resolve(this.vendorDir,this.name,s.name+file.ext);
-            FileSystem.writeFile(path,file.content);
+            if(file){
+                var path = FileSystem.resolve(this.vendorDir,this.name,s.name+file.ext);
+                FileSystem.writeFile(path,file.content);
+            }
         }
         for(var file of s.resources){
             var path = FileSystem.resolve(this.vendorDir,this.name,s.name+file.ext);

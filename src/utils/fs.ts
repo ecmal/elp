@@ -8,8 +8,14 @@ export class FileSystem {
     static relative(base:string,path:string):string{
         return this.path.relative(base,path);
     }
+    static basename(path:string,ext?:string):string{
+        return this.path.basename(path,ext);
+    }
     static dirname(path:string):string{
         return this.path.dirname(path);
+    }
+    static extname(path:string){
+        return this.path.extname(path);
     }
     static exists(path){
         return this.fs.existsSync(path)
@@ -105,6 +111,9 @@ export class FileSystem {
     }
     static copyFile(fromPath,toPath) {
         this.writeFile(toPath,this.readFile(fromPath));
+    }
+    static chmodFile(path:string,mode:string){
+        this.fs.chmodSync(file, parseInt(mode,8));
     }
     static writeFile(path:string,data:any){
         var dirname = this.dirname(path);
