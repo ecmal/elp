@@ -106,13 +106,7 @@ export class Source {
             var map = JSON.parse(this.map.content.toString());
             delete map.sourceRoot;
             map.sources = map.sources.map(s=> {
-                return s.replace(this.project, '.') + (this.ts || this.tsx).ext;
-            });
-            map.sourcesContent = map.sources.map((s:string)=> {
-                return FileSystem.readFile(FileSystem.resolve(dir, s)).toString();
-            });
-            map.sources = map.sources.map(s=> {
-                return s.split('/').pop();
+                return s.replace(this.project+'/', './');
             });
             this.files['.js.map'].content = JSON.stringify(map);
         }
@@ -147,16 +141,9 @@ export class Source {
         var meta = {
             name    : this.name,
             version : this.version,
-            size    : this.js?this.js.size:this.tsd.size,
-            hash    : this.js?this.js.hash:this.tsd.hash,
-            files   : {}
+            size    : this.js?this.js.size:undefined,
+            hash    : this.js?this.js.hash:undefined
         };
-        Object.keys(this.files).map(r=>(meta.files[r]={
-            ext     : this.files[r].ext,
-            hash    : this.files[r].hash,
-            size    : this.files[r].size,
-            sha     : this.files[r].sha
-        }));
         return meta;
     }
     protected inspect(){

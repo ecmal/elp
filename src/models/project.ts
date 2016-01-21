@@ -1,6 +1,6 @@
 import FileSystem from "../utils/fs";
 import {Repository} from "../utils/git";
-import {Compiler} from "../compiler";
+import {Compiler} from "../compiler/compiler";
 import {Source} from "./source"; import {stat} from "node/fs";
 
 
@@ -130,6 +130,17 @@ export class Project {
     }
     get deps():Deps{
         return this[DEPS];
+    }
+    get format():string{
+        return this.config.format;
+    }
+    get target():string{
+        return this.config.target;
+    }
+    get bundle():string{
+        if(this.config.bundle){
+            return `package.js`;
+        }
     }
     get name():string{
         return this.config.name;
@@ -301,16 +312,18 @@ export class Project {
         var deps = {};
         if(FileSystem.isDir(this.vendorDir)){
             FileSystem.readDir(this.vendorDir,false,true).forEach(dir=>{
-                var project = Project.read(dir);
-                if(project.name != this.name){
-                    project.patch({
-                        directories : {
-                            source  : '.',
-                            vendor  : '..'
-                        }
-                    });
-                    project.readSourcesFromFs(false);
-                    deps[project.name] = project;
+                if(FileSystem.isDir(dir) && FileSystem.isFile(FileSystem.resolve(dir,'package.json'))){
+                    var project = Project.read(dir);
+                    if(project.name != this.name){
+                        project.patch({
+                            directories : {
+                                source  : '.',
+                                vendor  : '..'
+                            }
+                        });
+                        project.readSourcesFromFs(false);
+                        deps[project.name] = project;
+                    }
                 }
             });
         }
@@ -318,9 +331,9 @@ export class Project {
     }
 
     private compileSources(){
-        for(var s:Source of this.sourcesAll){
+        /*for(var s:Source of this.sourcesAll){
             this.compiler.addSource(s);
-        }
+        }*/
         this.compiler.compile();
     }
     private writeSources(){

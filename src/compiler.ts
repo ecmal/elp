@@ -12,21 +12,25 @@ export class Compiler {
     getScriptFileNames(){
         return Object.keys(this.sources);
     }
-
+    useCaseSensitiveFileNames(){
+        return false;
+    }
     getScriptVersion(file) {
+        file = file.toLocaleLowerCase()
         var source:Source = this.sources[Source.getName(file)];
         if(source){
             return source.version
         }
     }
     getScriptSnapshot(file) {
+        file = file.toLocaleLowerCase()
         var source:Source = this.sources[Source.getName(file)];
         if(source){
             return ts.ScriptSnapshot.fromString(source.content)
         }
     }
     getCurrentDirectory() {
-        return this.project.sourceDir;
+        return '.';
     }
     getCompilationSettings(){
         return {
@@ -34,12 +38,12 @@ export class Compiler {
             declaration             : true,
             module                  : ts.ModuleKind.System,
             experimentalDecorators  : true,
-            sourceRoot              :'.',
-            sourceMap               :true
+            sourceRoot              : '.',
+            sourceMap               : true
         };
     }
     getDefaultLibFileName(options) {
-        return 'runtime/index';
+        return 'runtime/index.d.ts';
     }
     resolveModuleName(dirName,modName){
         modName = modName.replace(/(\.d)?\.(ts|js)$/,'');
@@ -51,7 +55,7 @@ export class Compiler {
         var containingDir:string = FileSystem.dirname(containingFile);
         return moduleNames.map(moduleName=>{
             var isRelative = moduleName[0]=='.';
-            var isExternalLibraryImport = containingDir.indexOf(this.project.name)!=0;
+            //var isExternalLibraryImport = containingDir.indexOf(this.project.name)!=0;
             var resolvedFileName;
             if(isRelative){
                 resolvedFileName = this.resolveModuleName(containingDir,moduleName);
@@ -96,7 +100,7 @@ export class Compiler {
         this.sources = {};
     }
     addSource(s:Source){
-        this.sources[s.uri] = s;
+        this.sources[s.uri.toLocaleLowerCase()] = s;
     }
     compile(){
         for(let s in this.sources){
@@ -109,7 +113,7 @@ export class Compiler {
     compileSource(source){
         if(source && source.compilable){
             process.stdout.write("COMPILING "+source+"\r");
-            var result = this.service.getEmitOutput(source.uri);
+            var result = this.service.getEmitOutput(source.uri+'.ts');
             if(!result.emitSkipped){
                 result.outputFiles.forEach(o=>{
                     source.addFile({
@@ -120,7 +124,7 @@ export class Compiler {
             }
             process.stdout.write('\033[0G');
             process.stdout.write("COMPILED "+source+"\n");
-            this.logErrors(source.uri);
+            this.logErrors(source.uri+'.ts');
         }
     }
     getDiagnostics(fileName: string):ts.Diagnostic[]{

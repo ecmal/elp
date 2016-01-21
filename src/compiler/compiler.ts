@@ -1,239 +1,126 @@
-import {FileSystem} from "../utils/fs";
-import {Package} from "../models/package";
-import {settings} from "node/cluster";
+import {Project} from "../models/project";
+import {Source} from "../models/source";
+import TS from "compiler/typescript";
+import FileSystem from "../utils/fs";
 
-const ts = require('typescript');
-const crypto = require('crypto');
-const ScriptSnapshot:any = ts.ScriptSnapshot;
-const NewLineKind:any = ts.NewLineKind;
+export class Compiler implements TS.CompilerHost {
 
-export class Script {
-
-    public uri:string;
-    public version:string;
-    public snapshot:any;
-
-    constructor(uri,content?){
-        this.uri = uri;
-        if(content) {
-            this.update(content);
+    fileExists(fileName:string):boolean {
+        console.info('CompilerHost.fileExists')
+        return false;
+    }
+    readFile(fileName:string):string {
+        console.info('CompilerHost.readFile')
+        return null;
+    }
+    getSourceFile(fileName: string, target: TS.ScriptTarget, onError?: (message: string) => void): TS.SourceFile {
+        var uri = Source.getName(fileName);
+        var source = this.sources[uri];
+        console.info(source);
+        if(source){
+            return TS.createSourceFile(fileName,source.content,target);
         }
     }
-    update(content){
-        this.version = crypto.createHash('md5').update(content).digest("hex");
-        this.snapshot = ScriptSnapshot.fromString(content);
+    getDefaultLibFileName(options: TS.CompilerOptions): string {
+        console.info('CompilerHost.getDefaultLibFileName');
+        return 'core/index.d.ts';
     }
-}
-export class Compiler {
-    getNewLine(){
-       return '\n'
-    }
-    getScriptFileNames() {
-        return Object.keys(this.scripts);
-    }
-    getSourceFileNames() {
-        return this.getScriptFileNames().filter(f=>{
-            return f.indexOf(this.projectName)==0;
-        })
-    }
-    getScript(fileName):Script{
-        if(!this.scripts[fileName]){
-            this.scripts[fileName]=new Script(fileName)
+    writeFile(fileName: string, data: string, writeByteOrderMark: boolean, onError?: (message: string) => void): void{
+        if(fileName.indexOf(this.project.name+'/')==0){
+           fileName = fileName.replace(this.project.name+'/','');
         }
-        return this.scripts[fileName];
-    }
-    getScriptVersion(fileName) {
-        return this.getScript(fileName).version;
-    }
-    getScriptSnapshot(fileName) {
-        return this.getScript(fileName).snapshot;
-    }
-    getCurrentDirectory() {
-        return this.sourceDir;
-    }
-    getCompilationSettings(){
-        if(this.release){
-            return {
-                target      : ts.ScriptTarget.ES5,
-                declaration : true,
-                module      : ts.ModuleKind.System,
-                experimentalDecorators: true,
-                inlineSourceMap:true,
-                inlineSources:true
-            };
-        }else{
-            return {
-                target      : ts.ScriptTarget.ES5,
-                declaration : true,
-                module      : ts.ModuleKind.System,
-                experimentalDecorators: true,
-                sourceRoot:this.sourceDir,
-                sourceMap:true
-            };
+        var name = Source.getName(fileName);
+        var ext = Source.getExt(fileName);
+        var source = this.project.sources[name];
+        if(!source){
+            source = this.project.sources[name] = new Source(this.project.name,name,true);
         }
+        console.info(source,ext);
+        source.addFile({
+            name    : name,
+            ext     : ext,
+            content : new Buffer(data)
+        });
+
+        //this.project.sources[]
+        /*var source = this.sources[uri];
+        console.info(source);
+        if(source){
+            return TS.createSourceFile(fileName,source.content,target);
+        }*/
     }
-    getDefaultLibFileName(options) {
-        return 'runtime/index.d.ts';
+    getCurrentDirectory(): string{
+        console.info('CompilerHost.getCurrentDirectory')
+        return '.';
+    }
+    getCanonicalFileName(fileName: string): string{
+        console.info('CompilerHost.getCanonicalFileName',fileName);
+        return fileName;
+    }
+    useCaseSensitiveFileNames(): boolean{
+        console.info('CompilerHost.useCaseSensitiveFileNames')
+        return true;
+    }
+    getNewLine(): string{
+        return '\n';
     }
     resolveModuleName(dirName,modName){
         modName = modName.replace(/(\.d)?\.(ts|js)$/,'');
         modName = FileSystem.resolve('/'+dirName,modName).substr(1);
-        if(this.scripts[modName+'.ts']){
-            return modName+'.ts';
-        }else{
-            return modName+'.d.ts';
-        }
         return modName;
     }
     resolveModuleNames(moduleNames: string[], containingFile: string){
+        //console.info(containingFile,moduleNames);
         var containingDir:string = FileSystem.dirname(containingFile);
         return moduleNames.map(moduleName=>{
             var isRelative = moduleName[0]=='.';
-            var isExternalLibraryImport = containingDir.indexOf(this.projectName)!=0;
+            var isExternalLibraryImport = containingDir.indexOf(this.project.name)!=0;
             var resolvedFileName;
             if(isRelative){
                 resolvedFileName = this.resolveModuleName(containingDir,moduleName);
             }else{
                 resolvedFileName = this.resolveModuleName('',moduleName);
             }
-            //console.info(isExternalLibraryImport?'EXTERNAL':'INTERNAL',containingDir,moduleName,' > ',resolvedFileName);
+            console.info(isExternalLibraryImport?'EXTERNAL':'INTERNAL',containingDir,moduleName,' > ',resolvedFileName);
             return {
-                resolvedFileName,
-                isExternalLibraryImport
+                resolvedFileName,isExternalLibraryImport
             };
         });
     }
 
 
-    public get sourceDir():string{
-        return this.settings.sourceDir;
-    };
-    public get outputDir():string{
-        return this.settings.outputDir;
-    };
+    private project:Project;
+    private program:TS.Program;
+    private sources:{[k:string]:Source};
 
-    public get projectName():string{
-        return this.settings.name;
-    };
-    public get projectVersion():string{
-        return this.settings.version;
-    };
-
-    private release:boolean;
-    private settings:Package;
-    private service:any;
-    private scripts:any;
-    private watcher:any;
-
-    constructor(){
-        this.service = ts.createLanguageService(this);
-        this.scripts = {};
+    constructor(project){
+        this.project = project;
+        this.program = null;
+        this.sources = {};
     }
 
-    private initRuntime(){
-        var runtimeLibDir = FileSystem.resolve(this.outputDir,'runtime');
-        if(!FileSystem.exists(runtimeLibDir)){
-            var runtimeDir = FileSystem.resolve(__dirname,'../../../out/runtime');
-            var runtimeDef = [
-                '// Core Api',
-                FileSystem.readFile(FileSystem.resolve(runtimeDir,'core.d.ts')).toString(),
-                '// Browser Api',
-                FileSystem.readFile(FileSystem.resolve(runtimeDir,'browser.d.ts')).toString(),
-                '// NodeJS Api',
-                FileSystem.readFile(FileSystem.resolve(runtimeDir,'node.d.ts')).toString(),
-                '// Runtime Api',
-                FileSystem.readFile(FileSystem.resolve(runtimeDir,'index.d.ts')).toString()
-            ].join('\n');
-            var runtimeJs = FileSystem.readFile(FileSystem.resolve(runtimeDir,'index.js')).toString();
-            var runtimeJson = FileSystem.readFile(FileSystem.resolve(runtimeDir,'package.json')).toString();
-            FileSystem.createDir(runtimeLibDir,true);
-            FileSystem.writeFile(FileSystem.resolve(runtimeLibDir,'index.d.ts'),runtimeDef);
-            FileSystem.writeFile(FileSystem.resolve(runtimeLibDir,'index.js'),runtimeJs);
-            FileSystem.writeFile(FileSystem.resolve(runtimeLibDir,'package.json'),runtimeJson);
-            console.info('Runtime Created');
-        }
-    }
-    private loadDefinitions(){
-        FileSystem.readDir(this.outputDir, true).forEach(f=> {
-            if (f.match(/\.d\.ts$/)) {
-                this.getScript(FileSystem.relative(this.outputDir, f)).update(FileSystem.readFile(f).toString());
-            }
+    compile(){
+        this.sources = {};
+        this.project.sourcesAll.forEach(s=>{
+            console.info(s.uri);
+            this.sources[s.uri] = s;
         });
-    }
-    private loadSources(){
-        FileSystem.readDir(this.sourceDir, true).forEach(f=> {
-            if (f.match(/(\.d)?\.ts$/)) {
-                this.getScript(`${this.projectName}/${FileSystem.relative(this.sourceDir,f)}`).update(FileSystem.readFile(f).toString());
-            }
-        });
-    }
-    watch(pack:Package){
-        this.compile(pack);
-        console.info('Watch : '+this.projectName);
-        this.watcher = FileSystem.watchDir(this.sourceDir,(e,f)=>{
-            f = FileSystem.resolve(this.sourceDir,f);
-            if(FileSystem.exists(f)) {
-                var uri = `${this.projectName}/${FileSystem.relative(this.sourceDir, f)}`;
-                this.getScript(uri).update(FileSystem.readFile(f).toString());
-                this.compileSource(uri);
-            }
-        });
-    }
-    compile(pack:Package,release:boolean=false){
-        var settingsDir = FileSystem.resolve(pack.outputDir,pack.name);
-        var settingsFile = FileSystem.resolve(settingsDir,'package.json');
-
-        this.release = release;
-        this.settings = pack;
-
-        this.initRuntime();
-        this.loadDefinitions();
-        this.loadSources();
-
-        console.info('Compile : '+this.projectName);
-
-        FileSystem.removeDir(settingsDir);
-        this.settings.write(settingsFile);
-        this.getSourceFileNames().forEach(uri=>{
-            this.compileSource(uri,true)
-        });
-        return settingsFile;
-    }
-    compileSource(uri,reload=true){
-        console.info('  ',uri);
-        if(reload && uri.indexOf(this.projectName+'/')==0){
-            var filename = FileSystem.resolve(this.sourceDir,uri.replace(this.projectName+'/',''));
-            if(FileSystem.exists(filename)){
-                this.getScript(uri).update(FileSystem.readFile(filename).toString());
-            }
-        }
-        var result = this.service.getEmitOutput(uri);
-        if(result.emitSkipped){
-            this.logErrors(uri);
-        }else{
-            result.outputFiles.forEach(o=>{
-                var file = FileSystem.resolve(this.outputDir,o.name);
-                console.error('    to ',o.name);
-                FileSystem.writeFile(file,o.text);
+        var program = TS.createProgram(this.project.sourcesSelf.filter(s=>s.ts|| s.tsx).map(s=>s.uri),{
+            module              : TS.ModuleKind[this.project.format||'System'],
+            target              : TS.ScriptTarget[this.project.target||'ES5'],
+            declaration         : true,
+            sourceMap           : true,
+            inlineSources       : true,
+            out                 : this.project.bundle
+        },this);
+        var result = program.emit();
+        if(result.diagnostics && result.diagnostics.length){
+            result.diagnostics.forEach((d:TS.Diagnostic)=>{
+                console.info(d.code, d.category, d.file? d.file.fileName:'', d.messageText);
             })
         }
 
     }
-
-    logErrors(fileName: string) {
-        let allDiagnostics = this.service.getCompilerOptionsDiagnostics()
-            .concat(this.service.getSyntacticDiagnostics(fileName))
-            .concat(this.service.getSemanticDiagnostics(fileName));
-
-        allDiagnostics.forEach(diagnostic => {
-            let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-            if (diagnostic.file) {
-                let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
-                console.log(`  Error ${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
-            }
-            else {
-                console.log(`  Error: ${message}`);
-            }
-        });
-    }
 }
+
+
