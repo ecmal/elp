@@ -494,7 +494,8 @@ export class Repository {
     log():Log {
         var header = ['sha','tree','parent','commit.date'];
         var format = '%H,%T,%P,%aI,%s,%b,%D,%N,%an,%ae'.split(',').join('\u001F');
-        return this.exec('log', "--pretty=format:"+format,'--all').output.split('\n').map(l=>{
+        var options = [];
+        return this.exec('log', "--pretty=format:"+format,...options).output.split('\n').map(l=>{
             var r:any = l.split('\u001F');
             r = {
                 commit    : r[0],

@@ -2,7 +2,6 @@ const OPTIONS:symbol = Symbol();
 const COMMAND:symbol = Symbol();
 const COMMANDS = [];
 
-
 export function Option(settings?):any{
     return (target:any,key:string) => {
         if(!settings.name){
@@ -15,12 +14,10 @@ export function Option(settings?):any{
         options[key] = settings;
     }
 }
-
 export function Command(settings?):any{
     if(!settings){
         settings = {};
     }
-
     return target=>{
         if(!settings.name){
             settings.name = String(target.name)
@@ -130,7 +127,6 @@ export default (name,version)=>{
     Cli.title = name;
     Cli.version = version;
     Cli[COMMAND].name = name;
-
     var Command:any=Cli,args = process.argv.slice(2);
     for(var i=0;i<args.length&&Command==Cli;i++){
         var arg = args[i];

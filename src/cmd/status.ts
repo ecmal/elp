@@ -25,3 +25,4 @@ export class Status extends Cli {
         console.info(repo.log());
     }
 }
+

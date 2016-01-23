@@ -13,7 +13,6 @@ const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
 
-
 type Sources = {[k:string]:Source};
 type Config = {[k:string]:any};
 type Deps = {[k:string]:Project};
@@ -142,6 +141,9 @@ export class Project {
             return `package.js`;
         }
     }
+    get core():string{
+        return this.config.core || 'core';
+    }
     get name():string{
         return this.config.name;
     }
@@ -192,6 +194,8 @@ export class Project {
         this.writeSources();
     }
     public publish(){
+        console.info(this.git.log());
+    /*
         this.clean();
 
         var stats  = this.git.status();
@@ -243,7 +247,7 @@ export class Project {
             }
         }else{
             console.info('No Changes');
-        }
+        }*/
     }
     public clean(){
         FileSystem.removeDir(this.outputDir);
@@ -349,7 +353,7 @@ export class Project {
         FileSystem.writeFile(packFile,packContent);
     }
     private writeSource(s:Source){
-        s.mapTo(this.sourceDir);
+        //s.mapTo(this.sourceDir);
         for(var t of ['tsd','js','map']){
             let file = s[t];
             if(file){
