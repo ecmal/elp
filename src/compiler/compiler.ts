@@ -1,6 +1,6 @@
 import {Project} from "../models/project";
 import {Source} from "../models/source";
-import TS from "compiler/typescript";
+import TS from "compiler/index";
 import FileSystem from "../utils/fs";
 
 export class Compiler implements TS.CompilerHost {

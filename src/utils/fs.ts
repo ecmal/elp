@@ -1,3 +1,5 @@
+
+
 export class FileSystem {
     private static fs = require('fs');
     private static path = require('path');
@@ -129,7 +131,7 @@ export class FileSystem {
     static writeJson(path:string,data:any){
         return this.writeFile(path,JSON.stringify(data,null,'  ')+'\n');
     }
-    static readFile(path:string):Buffer {
+    static readFile(path:string):any {
         return this.fs.readFileSync(path);
     }
     static readFileHash(path:string):string{

@@ -1,5 +1,4 @@
-import Config from "./config";
-import {FileSystem} from "./utils/fs";
+import {Config} from "./config";
 
 export class Services {
     load(config:Config):Promise<Services>{

@@ -15,7 +15,7 @@ export abstract class Entity {
         this[Entity.REPO] = repo;
     }
 
-    abstract parse(data:string):T;
+    abstract parse(data:string):any;
 }
 
 export class Remote extends Entity {
@@ -80,10 +80,8 @@ export class Remote extends Entity {
     }
 }
 
-export class Remotes {
 
-}
-class Status {
+export class Status {
 
     local   : any;
     remote  : any;
@@ -537,7 +535,7 @@ export class Repository {
     readFile(branch,path?){
         return this.exec('show','--binary',path?branch+':'+path:branch).output;
     }
-    log(obj?:string,count?:number):Log {
+    log(obj?:string,count?:number):any {
         var header = ['sha','tree','parent','commit.date'];
         var format = '%H,%T,%P,%aI,%s,%b,%D,%N,%an,%ae'.split(',').join('\u001F');
         var options = [];

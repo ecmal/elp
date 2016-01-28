@@ -1,5 +1,7 @@
 import FileSystem from "../utils/fs";
 import {Repository} from "../utils/git";
+import {Remotes} from "../utils/git";
+import {Status} from "../utils/git";
 import {Compiler} from "../compiler/compiler";
 import {Source} from "./source";
 import {Registry} from "./registry";
@@ -17,9 +19,9 @@ const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
 
-type Sources = {[k:string]:Source};
-type Config = {[k:string]:any};
-type Deps = {[k:string]:Project};
+export type Sources = {[k:string]:Source};
+export type Config = {[k:string]:any};
+export type Deps = {[k:string]:Project};
 
 
 export class Project {
@@ -125,10 +127,10 @@ export class Project {
         }
         return c;
     }
-    get remotes(){
+    get remotes():Remotes{
         return this.git.remotes();
     }
-    get status(){
+    get status():Status{
         return this.git.status();
     }
     get deps():Deps{
