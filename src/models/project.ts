@@ -342,7 +342,7 @@ export class Project {
                 file.name       = Source.getName(file.path);
                 file.ext        = Source.getExt(file.path);
                 file.content    = this.git.readFile(file.sha);
-                var source      = this.sources[file.name];
+                var source = this.sources[file.name];
                 if(!source){
                     source = this.sources[file.name] = new Source(this.name,file.name,main);
                 }

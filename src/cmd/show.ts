@@ -19,7 +19,6 @@ export class Show extends Cli {
     execute(url:string){
         if(Url.isValid(url)){
             console.info(Library.show(url));
-
         }
     }
 }
