@@ -18,13 +18,7 @@ import {Project} from "../models/project";
     |  espm compile -o ./my/out/dir ./my-module/package.json
     `]
 })
-export class Compile extends Cli {
-
-    @Option({
-        alias    : 'w',
-        title    : 'Watch files for compilation'
-    })
-    watch:boolean=false;
+export class Bundle extends Cli {
 
     @Option({
         alias    : 'o',
@@ -34,7 +28,7 @@ export class Compile extends Cli {
     output:boolean=false;
 
     execute(path:string=this.cwd){
-        Project.read(path).compile();
+        Project.read(path).compile(true);
     }
 
 }

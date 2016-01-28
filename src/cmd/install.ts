@@ -1,6 +1,7 @@
 import {Command} from './command';
 import {Option} from './command';
 import {Cli} from "./command";
+import {Project} from "../models/project";
 
 @Command({
     title  : 'Install Package',
@@ -29,6 +30,6 @@ export class Install extends Cli {
     saveDev:boolean;
 
     execute(...packages){
-        console.info(packages);
+        Project.read(this.cwd).install();
     }
 }

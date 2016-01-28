@@ -8,6 +8,8 @@ import './cmd/show';
 import './cmd/fetch';
 import './cmd/cache';
 import './cmd/clone';
+import './cmd/remotes';
+import './cmd/bundle';
 
 import cli from './cmd/command';
 import config from './config';

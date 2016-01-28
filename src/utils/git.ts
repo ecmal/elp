@@ -1,5 +1,5 @@
 import * as Cp from 'node/child_process';
-import * as Url from 'node/url';
+import * as URL from 'node/url';
 import {FileSystem} from "./fs";
 
 export abstract class Entity {
@@ -85,8 +85,8 @@ export class Remotes {
 }
 class Status {
 
-    local   : string;
-    remote  : string;
+    local   : any;
+    remote  : any;
     ahead   : number;
     changes : any;
     initial : boolean;
@@ -106,10 +106,19 @@ class Status {
             thead = thead.replace(/\[ahead\s(\d+)\]/,'$1');
             thead = thead.trim().split(/\s+/);
             if(thead[0]){
-                this.local = thead[0];
+                var local = thead[0];
+                this.local = {
+                    branch  : local
+                };
             }
             if(thead[1]){
-                this.remote = thead[1];
+                var parts  = thead[1].split('/');
+                var remote = parts[0];
+                var branch = parts[1];
+                this.remote = {
+                    branch  : branch,
+                    name    : remote
+                };
             }
             if(thead[2]){
                 this.ahead = thead[2]?parseInt(thead[2]):0;
@@ -192,7 +201,7 @@ export class Repository {
         })
     }
     private static parseRefs(text:string){
-        var remote = {};
+        var refs = {};
         text.trim().split('\n').forEach(r=>{
             var [sha,ref] = r.trim().split(/\s+/);
             var r = ref.split('/');
@@ -200,16 +209,55 @@ export class Repository {
             var type = r.shift();
             var name = r.join('/');
             if(t=='HEAD'){
-                remote.head = sha;
+                refs.head = sha;
             }else{
-                if(!remote[type]){
-                    remote[type]={[name]:sha}
+                if(!refs[type]){
+                    refs[type]={[name]:sha}
                 }else{
-                    remote[type][name]=sha;
+                    refs[type][name]=sha;
                 }
             }
         });
-        return remote;
+        if(refs.remotes){
+            var remotes = {};
+            Object.keys(refs.remotes).forEach(k=>{
+                var sha = refs.remotes[k];
+                var [remote,name] = k.split('/');
+                delete refs.remotes[k];
+                if(name=='HEAD'){
+                    if(!remotes[remote]){
+                        remotes[remote] = {head:sha}
+                    }else{
+                        remotes[remote].head = sha
+                    }
+                }else{
+                    var heads;
+                    if(!remotes[remote]){
+                        remotes[remote] = heads = {heads:{}}
+                    }else{
+                        remotes[remote].heads = heads = {}
+                    }
+                    heads[name] = sha;
+                }
+
+            });
+            refs.remotes = remotes;
+        }
+        if(refs.releases){
+            var releases = {};
+            Object.keys(refs.releases).forEach(k=>{
+                var sha = refs.releases[k];
+                var [ver,commit] = k.split('/');
+                delete refs.releases[k];
+                var commits = releases[ver];
+                if(!commits){
+                    commits = releases[ver]= {}
+                }
+                commits[commit] = sha;
+            });
+            refs.releases = releases;
+        }
+        return refs;
     }
     static isGitDir(path):boolean{
         return FileSystem.exists(FileSystem.resolve(path,'.git'));
@@ -269,7 +317,6 @@ export class Repository {
         }else{
             throw new Error(`Not a git dir '${gitDir}'`);
         }
-
     }
     config(){
         var fm = {},mp={};
@@ -412,32 +459,31 @@ export class Repository {
         });
         for(var r in remotes){
             var remote:any = remotes[r];
-            /*var url = Url.parse(remote.fetch||remote.push);
-            var path = url.pathname.replace(/(.*)(?:\.git)$/,'$1').split('/');
-            var [user,pass] = url.auth.split(':');
-            url.auth = null;
-            remote.url = Url.format(url);
-            remote.protocol = url.protocol.substring(0,url.protocol.length-1);
-            remote.host = url.host;
-            remote.user = user;
-            remote.project = path.pop();
-            remote.vendor = path.pop();
-            switch(url.hostname){
-                case 'bitbucket.org' :remote.registry = 'bitbucket';break;
-                case 'github.com'    :remote.registry = 'github';break;
-            }
-            if(pass){
-                remote.pass = pass;
-            }*/
             var refs=Repository.parseRefs(this.exec('ls-remote',r).output);
             for(var i in refs){
                 remote[i] = refs[i];
+
             }
+
+            var url = URL.parse(remote.fetch || remote.push);
+            delete url.auth;
+            remote.url = URL.format(url);
+
         }
         return remotes;
     }
     status():Status {
-        return new Status(this.exec('status', '--porcelain','--branch','--untracked-files=all').output);
+        var status = new Status(this.exec('status', '--porcelain', '--branch', '--untracked-files=all').output);
+        if(status.local && status.local.branch){
+            status.local.commit = this.rev(status.local.branch)
+        }
+        if(status.remote && status.remote.branch){
+            status.remote.commit = this.rev(status.remote.name+'/'+status.remote.branch);
+        }
+        return status;
+    }
+    rev(name){
+        return String(this.exec('rev-parse',name).output).trim()
     }
     refs(remote?){
         if(remote){
@@ -491,10 +537,17 @@ export class Repository {
     readFile(branch,path?){
         return this.exec('show','--binary',path?branch+':'+path:branch).output;
     }
-    log():Log {
+    log(obj?:string,count?:number):Log {
         var header = ['sha','tree','parent','commit.date'];
         var format = '%H,%T,%P,%aI,%s,%b,%D,%N,%an,%ae'.split(',').join('\u001F');
-        return this.exec('log', "--pretty=format:"+format,'--all').output.split('\n').map(l=>{
+        var options = [];
+        if(obj){
+            options.push(obj)
+        }
+        if(typeof count=='number'){
+            options.push(count)
+        }
+        return this.exec('log', "--pretty=format:"+format,...options).output.split('\n').map(l=>{
             var r:any = l.split('\u001F');
             r = {
                 commit    : r[0],
@@ -519,6 +572,24 @@ export class Repository {
         });
     }
 
+    tag(name,ref?){
+        var result;
+        if(ref){
+            result = this.exec('tag',name,ref)
+        }else{
+            result = this.exec('tag',name)
+        }
+        return result.output;
+    }
+    push(remote,ref,tags?=false){
+        var result;
+        if(tags){
+            result = this.exec('push',remote,'--tags',ref)
+        }else{
+            result = this.exec('push',remote,ref)
+        }
+        return result.output;
+    }
     public toString(){
         return `Git(${this.base})`;
     }

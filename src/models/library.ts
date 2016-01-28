@@ -102,15 +102,29 @@ export class Library {
     get refs(){
 
     }
-
+    get installed(){
+        return FileSystem.isDir(Library.local(this.url));
+    }
+    get versions(){
+        var refs = this.git.refs();
+        var versions = {};
+        Object.keys(refs.tags).forEach(t=>{
+            versions[t] = refs.tags[t];
+        });
+        Object.keys(refs.releases).forEach(v=>{
+            var release = refs.releases[v];
+            Object.keys(release).forEach(c=>{
+                if(versions[v]!=release[c]){
+                    versions[v+'-'+c] = release[c];
+                }
+            });
+        });
+        return versions;
+    }
     get git():Repository {
         var v:Repository = this[GIT];
         if(!v){
             v = this[GIT] = new Repository(this.local);
-            /*
-            if(v.init()){
-                v.addRemote('origin',this.registry.remote(this.url))
-            }*/
         }
         return v;
     }
@@ -134,15 +148,10 @@ export class Library {
         if(!remotes[this.registry.id]){
             this.git.exec('config','--local',`remote.${this.registry.id}.url`,this.registry.remote(this.url));
             this.git.exec('config','--local','--add',`remote.${this.registry.id}.fetch`, `+refs/tags/*:refs/tags/*`);
-            this.git.exec('config','--local','--add',`remote.${this.registry.id}.fetch`, `+refs/release/*:refs/release/*`);
+            this.git.exec('config','--local','--add',`remote.${this.registry.id}.fetch`, `+refs/releases/*:refs/releases/*`);
             if(dev) {
                 this.git.exec('config', '--local', '--add', `remote.${this.registry.id}.fetch`, `+refs/heads/*:refs/remotes/${this.registry.id}/*`);
             }
-            this.git.hook('post-commit',`
-                #!/usr/bin/env node
-                console.info('Post Commit');
-                console.info(process.argv);
-            `.trim());
         }
         /*this.git.setConfig({
             [`remote.${this.registry.id}.url`]:this.registry.remote(this.url),
@@ -154,6 +163,20 @@ export class Library {
 
         console.info(JSON.stringify(this.git.config(),null,2));
         console.info(this.git.fetch(this.registry.id));
+    }
+    fetch(){
+        this.git.exec('fetch',this.registry.id);
+    }
+    extract(dir:string){
+        var versions = this.versions;
+        if(versions[this.url.version]){
+            var map = this.git.readDir(versions[this.url.version]);
+            var files = Object.keys(map).map(f=>{
+                var file = FileSystem.resolve(dir,this.url.project,map[f].path);
+                var content = this.git.readFile(map[f].sha);
+                FileSystem.writeFile(file,content);
+            });
+        }
     }
     workdir(path,branch?,remote?){
         var result;
@@ -168,7 +191,9 @@ export class Library {
     remove(){
         FileSystem.removeDir(this.git.path);
     }
-
+    files(version){
+        return this.git.readDir(version);
+    }
     cached(){
         console.info(this.url.registry,this.url.vendor,this.url.project);
     }

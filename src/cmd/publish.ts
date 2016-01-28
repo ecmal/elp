@@ -21,7 +21,14 @@ import {Source} from "../models/project";
     `]
 })
 export class Publish extends Cli {
+
+    @Option({
+        alias    : 'f',
+        title    : 'Force to publish'
+    })
+    force:boolean;
+
     execute(path:string=this.cwd){
-        Project.read(path).publish();
+        Project.read(path).publish(this.force);
     }
 }

@@ -1,17 +1,33 @@
 import {Url} from "./url";
 import config from '../config';
-import {Library} from "./library";
 import FileSystem from "../utils/fs";
+
+import * as URL from 'node/url';
 
 const ID:symbol = Symbol('id');
 const REGISTRIES = {};
 
 export class Registry {
-    static get(url:Url):Registry {
-        if(url.registry && REGISTRIES[url.registry]) {
-            return <Registry>(new (<ObjectConstructor>REGISTRIES[url.registry])());
+    static for(url):Registry{
+        var regs = this.all();
+        for(var reg of regs){
+            if(reg.matches(url)){
+                return reg;
+            }
+        }
+    }
+    static all(){
+        return Object.keys(REGISTRIES).map(k=>this.get(k));
+    }
+    static get(url:string|Url):Registry {
+        var name = url;
+        if(url instanceof Url){
+            name = url.registry;
+        }
+        if(name && REGISTRIES[name]) {
+            return <Registry>(new (<ObjectConstructor>REGISTRIES[name])());
         }else{
-            throw new Error(`Unknown registry '${url.registry}' for module '${url.url}'`);
+            throw new Error(`Unknown registry '${name}' for module '${url}'`);
         }
     }
     static add(type:any){
@@ -27,6 +43,11 @@ export class Registry {
         return this.options.pattern
             .replace('%{vendor}',url.vendor)
             .replace('%{project}',url.project);
+    }
+    matches(url){
+        var u1 = URL.parse(url);
+        var u2 = URL.parse(this.options.pattern);
+        return u1.hostname == u2.hostname;
     }
     local(url){
         return FileSystem.resolve(config.home,'registry',url.vendor,url.project);

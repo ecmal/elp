@@ -11,6 +11,7 @@ import {FileSystem} from "../utils/fs";
 
 export class Registry {
     private static map={};
+
     static get(name):Registry{
         return <Registry>(new (<ObjectConstructor>this.map[name].type)(name,this.map[name].options));
     }

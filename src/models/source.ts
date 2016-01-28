@@ -142,8 +142,17 @@ export class Source {
             name    : this.name,
             version : this.version,
             size    : this.js?this.js.size:undefined,
-            hash    : this.js?this.js.hash:undefined
+            hash    : this.js?this.js.hash:undefined,
+            files   : {}
         };
+        for(var ext in this.files){
+            var file = this.files[ext];
+            meta.files[ext] = {
+                size : file.size,
+                hash : file.hash,
+                sha  : file.sha
+            }
+        }
         return meta;
     }
     protected inspect(){
