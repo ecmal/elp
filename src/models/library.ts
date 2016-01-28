@@ -9,9 +9,11 @@ const GIT:symbol = Symbol('git');
 const REGISTRY:symbol = Symbol('registry');
 
 export class Library {
+
     static get home():string{
         return FileSystem.resolve(config.home,'registry');
     }
+
     static local(url:Url){
         return FileSystem.resolve(this.home,url.vendor,url.project+'.git');
     }
@@ -82,7 +84,6 @@ export class Library {
     constructor(url){
         this[URL] = Url.parse(url);
     }
-
     get url():Url{
         return this[URL];
     }
@@ -128,18 +129,15 @@ export class Library {
         }
         return v;
     }
-
     toString(){
         return `Library(${this.url.url})`
     }
     inspect(){
         return this.toString();
     }
-
     info(){
 
     }
-
     install(dev?=false){
         if(!this.git.initialized){
             this.git.init();
