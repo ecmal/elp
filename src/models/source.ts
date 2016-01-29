@@ -33,7 +33,7 @@ export class Source {
         var exts = Object.keys(EXTS);
         for(var e of exts){
             var i = path.lastIndexOf(e);
-            if(i==path.length-e.length){
+            if(i>=0 && i==path.length-e.length){
                 return e;
             }
         }

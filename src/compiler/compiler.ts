@@ -35,16 +35,22 @@ export class Compiler implements TS.CompilerHost {
         }
 
         if(ext=='.js.map'){
-            var map = JSON.parse(data);
-            delete map.sourceRoot;
-            map.sources = map.sources.map(n=>{
-                if(n.indexOf(this.project.name+'/')==0){
-                    return n.replace(this.project.name+'/','./');
-                }else{
-                    return './'+n;
-                }
-            });
-            data = JSON.stringify(map,null,2);
+            try {
+                var map = JSON.parse(data);
+                delete map.sourceRoot;
+                map.sources = map.sources.map(n=> {
+                    if (n.indexOf(this.project.name + '/') == 0) {
+                        return n.replace(this.project.name + '/', './');
+                    } else {
+                        return './' + n;
+                    }
+                });
+                data = JSON.stringify(map, null, 2);
+            }catch(e){
+                console.info(e.stack);
+                console.info(fileName,ext);
+                console.info(data);
+            }
         }
 
 
