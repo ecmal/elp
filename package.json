@@ -11,8 +11,8 @@
     "type": "git",
     "url": "https://github.com/ecmal/elp.git"
   },
-  "bin"  : "index.js",
-  "main" : "index.js",
+  "bin"           : "index.js",
+  "main"          : "index.js",
   "directories"   : {
     "source"      : "src",
     "vendor"      : "out"

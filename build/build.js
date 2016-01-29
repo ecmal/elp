@@ -17,8 +17,8 @@ function compileSource(event,filename) {
     if(path.basename(filename)[0]!='.') {
         var srcFile = path.resolve(srcDir, filename);
         if (srcFile.match(/^(.*)(\.ts)$/)) {
-            var outFile = path.resolve(outDir, 'espm', filename).replace(/^(.*)(\.ts)$/, '$1.js');
-            var libFile = path.resolve(outDir, 'espm', filename).replace(/^(.*)(\.ts)$/, '$1.d.ts');
+            var outFile = path.resolve(outDir, 'elp', filename).replace(/^(.*)(\.ts)$/, '$1.js');
+            var libFile = path.resolve(outDir, 'elp', filename).replace(/^(.*)(\.ts)$/, '$1.d.ts');
             if (fs.existsSync(srcFile)) {
                 console.info('CHANGE', filename);
                 var source = fs.readFileSync(srcFile);
@@ -55,7 +55,7 @@ function compileSource(event,filename) {
                 }
             }
         } else {
-            var outFile = path.resolve(outDir, 'espm', filename);
+            var outFile = path.resolve(outDir, 'elp', filename);
             if (fs.existsSync(srcFile)) {
                 console.info('CHANGE', filename);
                 console.info('  ', outFile);

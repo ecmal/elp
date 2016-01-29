@@ -6,11 +6,11 @@ import FileSystem from "../utils/fs";
 export class Compiler implements TS.CompilerHost {
 
     fileExists(fileName:string):boolean {
-        console.info('CompilerHost.fileExists')
+        console.info('CompilerHost.fileExists');
         return false;
     }
     readFile(fileName:string):string {
-        console.info('CompilerHost.readFile')
+        console.info('CompilerHost.readFile');
         return null;
     }
     getSourceFile(fileName: string, target: TS.ScriptTarget, onError?: (message: string) => void): TS.SourceFile {
@@ -75,6 +75,17 @@ export class Compiler implements TS.CompilerHost {
     resolveModuleName(dirName,modName){
         modName = modName.replace(/(\.d)?\.(ts|js)$/,'');
         modName = FileSystem.resolve('/'+dirName,modName).substr(1);
+
+        var src = this.sources[modName];
+        if(src) {
+            if (src.ts) {
+                modName = modName + '.ts'
+            } else if (src.tsx) {
+                modName = modName + '.tsx'
+            } else if (src.tsd) {
+                modName = modName + '.d.ts'
+            }
+        }
         return modName;
     }
     resolveModuleNames(moduleNames: string[], containingFile: string){
@@ -89,7 +100,8 @@ export class Compiler implements TS.CompilerHost {
                 resolvedFileName = this.resolveModuleName('',moduleName);
             }
             return {
-                resolvedFileName,isExternalLibraryImport
+                resolvedFileName,
+                isExternalLibraryImport
             };
         });
     }
@@ -104,13 +116,8 @@ export class Compiler implements TS.CompilerHost {
         this.program = null;
         this.sources = {};
     }
-
-    compile(){
-        this.sources = {};
-        this.project.sourcesAll.forEach(s=>{
-            this.sources[s.uri] = s;
-        });
-        var program = TS.createProgram(this.project.sourcesSelf.filter(s=>s.ts|| s.tsx).map(s=>s.uri),{
+    get options(){
+        return {
             module              : TS.ModuleKind[this.project.format||'System'],
             target              : TS.ScriptTarget[this.project.target||'ES5'],
             declaration         : true,
@@ -118,13 +125,43 @@ export class Compiler implements TS.CompilerHost {
             inlineSources       : true,
             noLib               : this.project.core != 'core',
             out                 : this.project.bundle
-        },this);
-        var result = program.emit();
-        if(result.diagnostics && result.diagnostics.length){
-            result.diagnostics.forEach((d:TS.Diagnostic)=>{
-                console.info(d.code, d.category, d.file? d.file.fileName:'', d.messageText);
-            })
         }
+    }
+    compile(){
+        this.sources = {};
+        this.project.sourcesAll.forEach(s=>{
+            this.sources[s.uri] = s;
+        });
+        var sources = this.project.sourcesSelf.filter(s=>s.ts||s.tsx).map(s=>s.uri+'.ts');
+        this.program = TS.createProgram(sources,this.options,this,this.program);
+
+        var diagnostics:Array<TS.Diagnostic> = [];
+        this.program.getSourceFiles().forEach(s=>{
+            diagnostics = diagnostics.concat(this.program.getSyntacticDiagnostics(s));
+            diagnostics = diagnostics.concat(this.program.getDeclarationDiagnostics(s));
+            diagnostics = diagnostics.concat(this.program.getSemanticDiagnostics(s));
+        });
+        diagnostics = diagnostics.concat(this.program.getGlobalDiagnostics());
+        diagnostics = diagnostics.concat(this.program.getOptionsDiagnostics());
+        var result = this.program.emit();
+        if(result.diagnostics && result.diagnostics.length){
+            diagnostics = diagnostics.concat(result.diagnostics);
+        }
+        diagnostics = diagnostics.filter(d=>!!d);
+        if(diagnostics.length>0){
+            diagnostics.forEach((d:TS.Diagnostic)=>{
+                var category = '';
+                for(var i in TS.DiagnosticCategory){
+                    if(d.category==TS.DiagnosticCategory[i]){
+                        category = i;
+                        break;
+                    }
+                }
+                var file = d.file? ` '${d.file.fileName}' - `:' - ';
+                console.info(`${category} ${d.code}${file}${d.messageText}`);
+            });
+        }
+        return diagnostics;
     }
 }
 

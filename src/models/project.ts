@@ -8,8 +8,6 @@ import {Registry} from "./registry";
 import {Url} from "./url";
 import {Library} from "./library";
 
-
-
 const crypto = require('crypto');
 const FILE:symbol = Symbol('file');
 const CONFIG:symbol = Symbol('config');
@@ -203,6 +201,14 @@ export class Project {
             this.config[key] = props[key];
         }
         return this;
+    }
+    public watch(){
+        this.clean();
+        this.readFs();
+        this.compileSources();
+        this.writeSources();
+        this.writePackage();
+        this.watchSources();
     }
     public compile(bundle?:boolean){
         this.clean();
@@ -398,6 +404,27 @@ export class Project {
         this.sourcesSelf.forEach(s=>{
             this.writeSource(s);
         });
+    }
+    private watchSources(){
+        FileSystem.watchDir(this.sourceDir,(e,f)=>{
+            var path = FileSystem.resolve(this.sourceDir,f);
+            if(FileSystem.exists(path)){
+                var file = {path:f};
+                file.from = 'file';
+                file.name = Source.getName(file.path);
+                file.ext = Source.getExt(file.path);
+                file.content = FileSystem.readFile(path).toString();
+                var source = this.sources[file.name];
+                if(!source){
+                    source = this.sources[file.name] = new Source(this.name,file.name,true);
+                }
+                source.addFile(file);
+                this.compiler.compile();
+                this.writeSource(source);
+            }else{
+                console.info('delete source ',f);
+            }
+        },true);
     }
     private bundleSources(){
         var runtime,sources={};

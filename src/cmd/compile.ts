@@ -1,6 +1,7 @@
 import {Command} from './command';
 import {Option} from './command';
 import {Cli} from "./command";
+
 import {FileSystem} from "../utils/fs";
 import {Compiler} from "../compiler/compiler";
 import {Project} from "../models/project";
@@ -34,7 +35,11 @@ export class Compile extends Cli {
     output:boolean=false;
 
     execute(path:string=this.cwd){
-        Project.read(path).compile();
+        if(this.watch){
+            Project.read(path).watch();
+        }else{
+            Project.read(path).compile();
+        }
     }
 
 }

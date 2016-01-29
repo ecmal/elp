@@ -112,6 +112,7 @@ export class Source {
         }
     }
     addFile(file){
+        //console.info(file);
         var old = this.files[file.ext];
         if(!old){
             old = this.files[file.ext] = {};
