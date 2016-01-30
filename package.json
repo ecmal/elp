@@ -1,15 +1,15 @@
 {
-  "name": "elp",
-  "vendor": "ecmal",
-  "registry" : "github",
-  "version": "0.0.1",
-  "author": "Sergey Mamyan <sergey.mamyan@gmail.com>",
-  "homepage": "https://github.com/ecmal/elp#readme",
-  "license": "ISC",
-  "description": "Ecmal package manager",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ecmal/elp.git"
+  "name"          : "elp",
+  "vendor"        : "ecmal",
+  "registry"      : "github",
+  "version"       : "0.0.1",
+  "author"        : "Sergey Mamyan <sergey.mamyan@gmail.com>",
+  "homepage"      : "https://github.com/ecmal/elp#readme",
+  "license"       : "ISC",
+  "description"   : "Ecmal package manager",
+  "repository"    : {
+    "type"        : "git",
+    "url"         : "https://github.com/ecmal/elp.git"
   },
   "bin"           : "index.js",
   "main"          : "index.js",

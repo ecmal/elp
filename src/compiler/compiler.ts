@@ -137,9 +137,13 @@ export class Compiler implements TS.CompilerHost {
 
         var diagnostics:Array<TS.Diagnostic> = [];
         this.program.getSourceFiles().forEach(s=>{
-            diagnostics = diagnostics.concat(this.program.getSyntacticDiagnostics(s));
-            diagnostics = diagnostics.concat(this.program.getDeclarationDiagnostics(s));
-            diagnostics = diagnostics.concat(this.program.getSemanticDiagnostics(s));
+            var d = [];
+            d = d.concat(this.program.getSyntacticDiagnostics(s)||[]);
+            d = d.concat(this.program.getDeclarationDiagnostics(s)||[]);
+            d = d.concat(this.program.getSemanticDiagnostics(s)||[]);
+            if(d.length) {
+                diagnostics = diagnostics.concat(d)
+            }
         });
         diagnostics = diagnostics.concat(this.program.getGlobalDiagnostics());
         diagnostics = diagnostics.concat(this.program.getOptionsDiagnostics());
@@ -158,7 +162,7 @@ export class Compiler implements TS.CompilerHost {
                     }
                 }
                 var file = d.file? ` '${d.file.fileName}' - `:' - ';
-                console.info(`${category} ${d.code}${file}${d.messageText}`);
+                console.info(`  ${category} ${d.code}${file}${d.messageText}`);
             });
         }
         return diagnostics;

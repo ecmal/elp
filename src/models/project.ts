@@ -107,12 +107,9 @@ export class Project {
                     console.info(c.exec('checkout','--orphan','release').output);
                     this.git.exec('branch','-d',tempName);
                 }
-
                 var refs = c.refs();
                 console.info(refs);
-
             }
-
         }else{
             console.info("NOT RELEASE",this.dirname,Repository.isGitDir(this.dirname))
         }
@@ -398,7 +395,12 @@ export class Project {
         this[DEPS] = deps;
     }
     private compileSources(){
-        this.compiler.compile();
+        var diagnostics = this.compiler.compile();
+        if(diagnostics.length){
+            console.info('FAILED');
+        }else{
+            console.info('COMPILED');
+        }
     }
     private writeSources(){
         this.sourcesSelf.forEach(s=>{
@@ -406,23 +408,34 @@ export class Project {
         });
     }
     private watchSources(){
+        console.info('WATCHING');
         FileSystem.watchDir(this.sourceDir,(e,f)=>{
-            var path = FileSystem.resolve(this.sourceDir,f);
-            if(FileSystem.exists(path)){
+            try{
+                var path = FileSystem.resolve(this.sourceDir,f);
                 var file = {path:f};
-                file.from = 'file';
-                file.name = Source.getName(file.path);
-                file.ext = Source.getExt(file.path);
-                file.content = FileSystem.readFile(path).toString();
-                var source = this.sources[file.name];
-                if(!source){
-                    source = this.sources[file.name] = new Source(this.name,file.name,true);
+                if(FileSystem.exists(path)){
+
+                    file.from = 'file';
+                    file.name = Source.getName(file.path);
+                    file.ext = Source.getExt(file.path);
+                    file.content = FileSystem.readFile(path).toString();
+                    var source = this.sources[file.name];
+                    if(!source){
+                        source = this.sources[file.name] = new Source(this.name,file.name,true);
+                    }
+                    source.addFile(file);
+                    var diagnostics = this.compiler.compile();
+                    if(diagnostics.length){
+                        console.info('FAILED   :',file.path);
+                    }else{
+                        console.info('COMPILED :',file.path);
+                    }
+                    this.writeSource(source);
+                }else{
+                    console.info('DELETED  :',file.path);
                 }
-                source.addFile(file);
-                this.compiler.compile();
-                this.writeSource(source);
-            }else{
-                console.info('delete source ',f);
+            }catch(ex){
+                console.info(ex.stack);
             }
         },true);
     }
