@@ -115,7 +115,7 @@ export class FileSystem {
         this.writeFile(toPath,this.readFile(fromPath));
     }
     static chmodFile(path:string,mode:string){
-        this.fs.chmodSync(file, parseInt(mode,8));
+        this.fs.chmodSync(path, parseInt(mode,8));
     }
     static writeFile(path:string,data:any){
         var dirname = this.dirname(path);

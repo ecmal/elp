@@ -18,7 +18,6 @@ const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
 
 export type Sources = {[k:string]:Source};
-export type Config = {[k:string]:any};
 export type Deps = {[k:string]:Project};
 
 
@@ -41,10 +40,10 @@ export class Project {
     }
 
     private [FILE]:string;
-    private [CONFIG]:Config;
+    private [CONFIG]:any;
     private [SOURCES]:Sources;
     private [REPO_SOURCE]:Repository;
-    private [RELEASE]:Repository;
+    private [REPO_RELEASE]:Repository;
     private [DEPS]:Deps;
 
     get filename():string{
@@ -53,7 +52,7 @@ export class Project {
     get dirname():string{
         return FileSystem.dirname(this.filename);
     }
-    get config():Config{
+    get config():any{
         var c=this[CONFIG];
         if(!c){
             c=this[CONFIG]={};
@@ -102,7 +101,7 @@ export class Project {
                 if(refs.heads.release){
                     this.git.exec('worktree','add',this.outputDir,'release');
                 }else{
-                    var tempName = 'temp-'+parseInt(Math.random()*1000);
+                    var tempName = 'temp-'+Math.round(Math.random()*1000);
                     this.git.exec('worktree','add','-b',tempName,this.outputDir);
                     console.info(c.exec('checkout','--orphan','release').output);
                     this.git.exec('branch','-d',tempName);
@@ -186,9 +185,6 @@ export class Project {
     get vendorDir():string {
         return FileSystem.resolve(this.dirname,this.dirs.vendor);
     }
-    set vendorDir(v:string){
-        this.directories.vendor = FileSystem.relative(this.dirname,v);
-    }
     get outputDir():string{
         return FileSystem.resolve(this.vendorDir,this.name);
     }
@@ -240,7 +236,7 @@ export class Project {
             library.extract(this.vendorDir)
         })
     }
-    public publish(force?=false){
+    public publish(force?:boolean){
         this.clean();
         var stats  = this.git.status();
         var refs = this.git.refs();
@@ -338,7 +334,7 @@ export class Project {
         }
         //this.readSourcesFromFs(branch,main);
     }
-    private readSourcesFromGit(branch='HEAD',main?:boolean=true){
+    private readSourcesFromGit(branch='HEAD',main:boolean=true){
         if(this.git){
             var files = this.git.readDir(branch,this.dirs.source);
             for(var f in files){
@@ -357,7 +353,7 @@ export class Project {
     }
     private readSourcesFromFs(main?){
         FileSystem.readDir(this.sourceDir,true).forEach(f=>{
-            var file = {
+            var file:any = {
                 path : FileSystem.relative(this.sourceDir,f)
             };
             if(file.path!='package.json'){
@@ -412,7 +408,7 @@ export class Project {
         FileSystem.watchDir(this.sourceDir,(e,f)=>{
             try{
                 var path = FileSystem.resolve(this.sourceDir,f);
-                var file = {path:f};
+                var file:any = {path:f};
                 if(FileSystem.exists(path)){
 
                     file.from = 'file';
@@ -469,7 +465,7 @@ export class Project {
         FileSystem.writeFile(packFile,packContent);
     }
     private compilePackage():any{
-        var json = {
+        var json:any = {
             name        : this.name,
             vendor      : this.vendor,
             version     : this.version,

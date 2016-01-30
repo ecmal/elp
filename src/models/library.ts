@@ -37,9 +37,9 @@ export class Library {
         return new Library(url);
     }
     static show(url){
-        var url = Url.parse(url);
-        var registry = Registry.get(url);
-        var remote = registry.remote(url);
+        var u = Url.parse(url);
+        var registry = Registry.get(u);
+        var remote = registry.remote(u);
         var refs = Repository.refs(remote);
         var release = 'release';
         var source  = (()=>{
@@ -48,7 +48,7 @@ export class Library {
                     return branch;
                 }
             }
-            return branches[0];
+            return refs.heads[0];
         })();
         if(refs.tags) {
             var versions = Object.keys(refs.tags).map(v=> {
@@ -58,10 +58,10 @@ export class Library {
                 }
             });
         }
-        var local = Library.local(url);
+        var local = Library.local(u);
         return {
-            name       : url.project,
-            vendor     : url.vendor,
+            name       : u.project,
+            vendor     : u.vendor,
             remote     : remote,
             local      : local,
             exist      : FileSystem.isDir(local),
@@ -100,9 +100,6 @@ export class Library {
     get remote(){
         return this.registry.remote(this.url);
     }
-    get refs(){
-
-    }
     get installed(){
         return FileSystem.isDir(Library.local(this.url));
     }
@@ -138,7 +135,7 @@ export class Library {
     info(){
 
     }
-    install(dev?=false){
+    install(dev?:boolean){
         if(!this.git.initialized){
             this.git.init();
         }

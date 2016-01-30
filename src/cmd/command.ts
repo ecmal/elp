@@ -57,7 +57,7 @@ export class Cli {
         var commands = this!=Cli?[]:COMMANDS.map(c=>c[COMMAND]).map(command=>{
             return `   \033[1m${command.name}\033[0m : ${command.title}`;
         });
-        var head = [],parent = this.prototype.__proto__.constructor[COMMAND];
+        var head = [],parent = (<any>this.prototype).__proto__.constructor[COMMAND];
         if(parent){
             head.push(parent.name);
         }

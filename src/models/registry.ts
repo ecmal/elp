@@ -8,21 +8,25 @@ const ID:symbol = Symbol('id');
 const REGISTRIES = {};
 
 export class Registry {
+
     static for(url):Registry{
-        var regs = this.all();
+        var regs:Registry[] = this.all();
         for(var reg of regs){
             if(reg.matches(url)){
                 return reg;
             }
         }
+        return null;
     }
-    static all(){
+    static all():Registry[]{
         return Object.keys(REGISTRIES).map(k=>this.get(k));
     }
     static get(url:string|Url):Registry {
-        var name = url;
+        var name:string;
         if(url instanceof Url){
             name = url.registry;
+        }else{
+            name = <string>url;
         }
         if(name && REGISTRIES[name]) {
             return <Registry>(new (<ObjectConstructor>REGISTRIES[name])());

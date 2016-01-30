@@ -129,16 +129,40 @@ export class Compiler implements TS.CompilerHost {
         this.program = null;
         this.sources = {};
     }
-    get options(){
-        return {
-            experimentalDecorators:true,
-            module              : TS.ModuleKind[this.project.format||'System'],
-            target              : TS.ScriptTarget[this.project.target||'ES5'],
-            declaration         : true,
-            sourceMap           : true,
-            inlineSources       : true,
-            noLib               : this.project.core != 'core',
-            out                 : this.project.bundle
+    get options():TS.CompilerOptions{
+
+        var modFormat:TS.ModuleKind  = TS.ModuleKind.System;
+        if(this.project.format){
+            switch(this.project.format.toUpperCase()){
+                case 'AMD'      :modFormat=TS.ModuleKind.AMD;break;
+                case 'COMMONJS' :modFormat=TS.ModuleKind.CommonJS;break;
+                case 'ES6'      :modFormat=TS.ModuleKind.ES6;break;
+                case 'ES2015'   :modFormat=TS.ModuleKind.ES2015;break;
+                case 'NONE'     :modFormat=TS.ModuleKind.None;break;
+                case 'SYSTEM'   :modFormat=TS.ModuleKind.System;break;
+                case 'UMD'      :modFormat=TS.ModuleKind.UMD;break;
+            }
+        }
+        var modTarget:TS.ScriptTarget  = TS.ScriptTarget.ES5;
+        if(this.project.target){
+            switch(this.project.target.toUpperCase()){
+                case 'ES3'      :modTarget=TS.ScriptTarget.ES3;break;
+                case 'ES5'      :modTarget=TS.ScriptTarget.ES5;break;
+                case 'ES6'      :modTarget=TS.ScriptTarget.ES6;break;
+                case 'ES2015'   :modTarget=TS.ScriptTarget.ES2015;break;
+                case 'Latest'   :modTarget=TS.ScriptTarget.Latest;break;
+            }
+        }
+
+        return <TS.CompilerOptions> {
+            experimentalDecorators  : true,
+            module                  : modFormat,
+            target                  : modTarget,
+            declaration             : true,
+            sourceMap               : true,
+            inlineSources           : true,
+            noLib                   : this.project.core != 'core',
+            out                     : this.project.bundle
         }
     }
     compile(){
@@ -165,19 +189,36 @@ export class Compiler implements TS.CompilerHost {
         if(result.diagnostics && result.diagnostics.length){
             diagnostics = diagnostics.concat(result.diagnostics);
         }
-        diagnostics = diagnostics.filter(d=>!!d);
+        diagnostics = diagnostics.filter(d=>(d && d.code!=1166)).sort((a,b)=>{
+            if(a.file && b.file){
+                return a.file.fileName== b.file.fileName?0:(
+                    a.file.fileName>b.file.fileName?1:-1
+                )
+            }else{
+                return 0;
+            }
+        });
         if(diagnostics.length>0){
-            diagnostics.forEach((d:TS.Diagnostic)=>{
+            let len:number = Math.min(10,diagnostics.length);
+            for(let dk=0;dk<len;dk++){
+                let d:TS.Diagnostic = diagnostics[dk];
                 var category = '';
-                for(var i in TS.DiagnosticCategory){
-                    if(d.category==TS.DiagnosticCategory[i]){
-                        category = i;
-                        break;
-                    }
+                switch(d.category){
+                    case TS.DiagnosticCategory.Error   :category='Error';   break;
+                    case TS.DiagnosticCategory.Warning :category='Warning'; break;
+                    case TS.DiagnosticCategory.Message :category='Message'; break;
                 }
-                var file = d.file? ` '${d.file.fileName}' - `:' - ';
-                console.info(`  ${category} ${d.code}${file}${d.messageText}`);
-            });
+                var file = ' - ';
+                if(d.file){
+                    let { line, character } = d.file.getLineAndCharacterOfPosition(d.start);
+                    file = ` '${d.file.fileName}:${line+1}:${character+1}' - `;
+                }
+                var message = TS.flattenDiagnosticMessageText(d.messageText, '\n  ');
+                console.info(`  ${category} ${d.code}${file}${message}`);
+            }
+            if(diagnostics.length>len){
+                console.info(`  ${diagnostics.length-len} more`);
+            }
         }
         return diagnostics;
     }

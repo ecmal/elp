@@ -2,17 +2,20 @@ import * as Cp from 'node/child_process';
 import * as URL from 'node/url';
 import {FileSystem} from "./fs";
 
+const REFS:symbol       = Symbol('refs');
+const TAGS:symbol       = Symbol('tags');
+const BRANCHES:symbol   = Symbol('branches');
+const REPO:symbol       = Symbol('repo');
+
 export abstract class Entity {
 
-    private static REPO:symbol=Symbol('repo');
-
-    protected [Entity.REPO]:Repository;
+    protected [REPO]:Repository;
     public get repo():Repository{
-        return this[Entity.REPO];
+        return this[REPO];
     }
 
     constructor(repo:Repository){
-        this[Entity.REPO] = repo;
+        this[REPO] = repo;
     }
 
     abstract parse(data:string):any;
@@ -20,21 +23,17 @@ export abstract class Entity {
 
 export class Remote extends Entity {
 
-    private static REFS:symbol=Symbol('branches');
-    private static TAGS:symbol=Symbol('branches');
-    private static BRANCHES:symbol=Symbol('branches');
-
-    protected [Remote.REFS]:{[key:string]:string};
-    protected [Remote.BRANCHES]:string[];
-    protected [Remote.TAGS]:string[];
+    protected [REFS]:{[key:string]:string};
+    protected [BRANCHES]:string[];
+    protected [TAGS]:string[];
 
     public get refs():{[key:string]:string}{
-        return this[Remote.REFS];
+        return this[REFS];
     }
     public get branches():string[]{
-        var list = this[Remote.BRANCHES];
+        var list = this[BRANCHES];
         if(!list){
-            list = this[Remote.BRANCHES]=[];
+            list = this[BRANCHES]=[];
             for(var ref in this.refs){
                 var arr = ref.match(/^refs\/heads\/(.*)$/);
                 if(arr){
@@ -45,9 +44,9 @@ export class Remote extends Entity {
         return list;
     }
     public get tags():string[]{
-        var list = this[Remote.TAGS];
+        var list = this[TAGS];
         if(!list){
-            list = this[Remote.TAGS]=[];
+            list = this[TAGS]=[];
             for(var ref in this.refs){
                 var arr = ref.match(/^refs\/tags\/(.*)$/);
                 if(arr){
@@ -71,7 +70,7 @@ export class Remote extends Entity {
         }
     }
     parse(data:string):Remote {
-        var refs = this[Remote.REFS] = {};
+        var refs = this[REFS] = {};
         data.trim().split('\n').forEach(l=>{
             var r = l.trim().split(/\s+/);
             refs[r[1]]=r[0];
@@ -160,7 +159,7 @@ export class Status {
             if(a.indexOf('/')<0 && b.indexOf('/')>0){
                 return 1;
             }else{
-                return a-b;
+                return a==b?0:(a<b?-1:1);
             }
         });
         if(files.length) {
@@ -176,7 +175,7 @@ export class Status {
 }
 
 export interface Remote {
-
+    name:string;
 }
 export interface Remotes {
     [k:string]:Remote;
@@ -199,13 +198,13 @@ export class Repository {
         })
     }
     private static parseRefs(text:string){
-        var refs = {};
+        var refs:any = {};
         text.trim().split('\n').forEach(r=>{
-            var [sha,ref] = r.trim().split(/\s+/);
-            var r = ref.split('/');
-            var t = r.shift();
-            var type = r.shift();
-            var name = r.join('/');
+            var [sha,ref] = a.trim().split(/\s+/);
+            var a = ref.split('/');
+            var t = a.shift();
+            var type = a.shift();
+            var name = a.join('/');
             if(t=='HEAD'){
                 refs.head = sha;
             }else{
@@ -278,9 +277,9 @@ export class Repository {
         var result = Cp.spawnSync('git',params,{
             cwd : this.path
         });
-        var output:Buffer|string;
+        var output:string;
         if(result.output){
-            output = Buffer.concat(result.output.filter(i=>(i && i.length)));
+            output = result.output.filter(i=>(i && i.length>0)).map(i=>i.toString()).join('');
         }
         if(!binary && output){
             output = output.toString();
@@ -306,17 +305,17 @@ export class Repository {
         FileSystem.chmodFile(file, '755');
     }
     head(ref:string){
-        var girDir = this.base;
-        if(FileSystem.isFile(girDir)){
-            girDir = FileSystem.readFile(girDir).toString().replace('gitdir:','').trim();
+        var gitDir = this.base;
+        if(FileSystem.isFile(gitDir)){
+            gitDir = FileSystem.readFile(gitDir).toString().replace('gitdir:','').trim();
         }
-        if(FileSystem.isDir(girDir)){
-            FileSystem.writeFile(FileSystem.resolve(girDir,'HEAD'),`ref: ${ref}`);
+        if(FileSystem.isDir(gitDir)){
+            FileSystem.writeFile(FileSystem.resolve(gitDir,'HEAD'),`ref: ${ref}`);
         }else{
             throw new Error(`Not a git dir '${gitDir}'`);
         }
     }
-    config(){
+    config():any{
         var fm = {},mp={};
         this.exec('config','-l').output.trim().split('\n').forEach(p=>{
             var [key,val] = p.split('=');
@@ -360,50 +359,17 @@ export class Repository {
         if(result.output){
             return new Remote(this).parse(result.output);
         }else{
-            throw new Error(`Invalid remote "${remote}" ${output}`)
+            throw new Error(`Invalid remote "${remote}" ${result.output}`)
         }
     }
 
     hasRemote(name):boolean {
-        return this.getRemotes().indexOf(name)>=0;
+        return !!this.remotes()[name];
     }
     addRemote(name,url,...options):void{
         this.exec('remote','add',...options,name,url);
     }
-    getRemoteBranches(remote,...params){
-        var result = this.exec('ls-remote',remote,...params).stdout.trim();
-        if(result){
-            return result.split('\n').map(l=>{
-                l = l.split(/\s+/);
-                var data = {type:'',name:'',sha:l[0],ref:l[1],remote};
-                if(data.ref=='HEAD'){
-                    data.type = 'head';
-                    data.name = data.ref;
-                }else {
-                    data.type = data.ref.split('/')[1];
-                    data.name = data.ref.split('/').splice(2).join('/');
-                    switch (data.type) {
-                        case 'heads' :
-                            data.type = 'branch';
-                            break;
-                        case 'tags'  :
-                            data.type = 'tag';
-                            break;
-                    }
-                }
-                return data;
-            });
-        }
-    }
-    hasRemoteBranch(remote,name):boolean{
-        var branches = this.getRemoteBranches(remote);
-        for(var branch of branches){
-            if(branch.name==name){
-                return true;
-            }
-        }
-        return false;
-    }
+
     constructor(path:string){
         this.path = path;
     }
@@ -448,9 +414,9 @@ export class Repository {
             var row = r.trim();
             if(row){
                 var [name,url,type] = row.split(/\s+/);
-                var remote = remotes[name];
+                var remote:any = remotes[name];
                 if(!remote){
-                    remote = remotes[name]={name};
+                    remote = remotes[name]=<Remote>{name};
                 }
                 remote[type.replace(/^\((.*)\)$/,'$1')] = url;
             }
@@ -462,11 +428,9 @@ export class Repository {
                 remote[i] = refs[i];
 
             }
-
             var url = URL.parse(remote.fetch || remote.push);
             delete url.auth;
             remote.url = URL.format(url);
-
         }
         return remotes;
     }
@@ -579,7 +543,7 @@ export class Repository {
         }
         return result.output;
     }
-    push(remote,ref,tags?=false){
+    push(remote,ref,tags?:boolean){
         var result;
         if(tags){
             result = this.exec('push',remote,'--tags',ref)

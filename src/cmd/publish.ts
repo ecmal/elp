@@ -2,11 +2,8 @@ import {Command} from './command';
 import {Option} from './command';
 import {Cli} from "./command";
 
-import {FileSystem} from "../utils/fs";
-import {Compiler} from "../compiler/compiler";
 import {Project} from "../models/project";
-import {Registry} from "../registry/registry";
-import {Source} from "../models/project";
+
 
 @Command({
     title  : 'Install Package',
