@@ -4,7 +4,6 @@ import TS from "compiler/index";
 import FileSystem from "../utils/fs";
 
 export class Compiler implements TS.CompilerHost {
-
     fileExists(fileName:string):boolean {
         console.info('CompilerHost.fileExists');
         return false;
@@ -15,13 +14,27 @@ export class Compiler implements TS.CompilerHost {
     }
     getSourceFile(fileName: string, target: TS.ScriptTarget, onError?: (message: string) => void): TS.SourceFile {
         var uri = Source.getName(fileName);
-        var source = this.sources[uri];
-        if(source){
-            return TS.createSourceFile(fileName,source.content,target);
+        if(fileName=='package.d.ts'){
+            var definitions = [];
+            Object.keys(this.sources).forEach(s=>{
+                var source = this.sources[s];
+                if(source.uri.match(/^(.*)\/package$/)){
+                    if(source.tsd && source.tsd.content){
+                        definitions.push(`//${source.project}/package.d.ts`);
+                        definitions.push(source.tsd.content.toString());
+                    }
+                }
+            });
+            return TS.createSourceFile(fileName,definitions.join('\n'),target);
+        }else{
+            var source = this.sources[uri];
+            if(source){
+                return TS.createSourceFile(fileName,source.content,target);
+            }
         }
     }
     getDefaultLibFileName(options: TS.CompilerOptions): string {
-        return `${this.project.core}/index.d.ts`;
+        return `package.d.ts`;
     }
     writeFile(fileName: string, data: string, writeByteOrderMark: boolean, onError?: (message: string) => void): void{
         if(fileName.indexOf(this.project.name+'/')==0){
@@ -118,6 +131,7 @@ export class Compiler implements TS.CompilerHost {
     }
     get options(){
         return {
+            experimentalDecorators:true,
             module              : TS.ModuleKind[this.project.format||'System'],
             target              : TS.ScriptTarget[this.project.target||'ES5'],
             declaration         : true,
