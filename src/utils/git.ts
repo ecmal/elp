@@ -200,7 +200,7 @@ export class Repository {
     private static parseRefs(text:string){
         var refs:any = {};
         text.trim().split('\n').forEach(r=>{
-            var [sha,ref] = a.trim().split(/\s+/);
+            var [sha,ref] = r.trim().split(/\s+/);
             var a = ref.split('/');
             var t = a.shift();
             var type = a.shift();

@@ -30,16 +30,18 @@ export class Source {
 
     }
     static getExt(path){
-        var exts = Object.keys(EXTS);
+        var ext:string, exts = Object.keys(EXTS);
         for(var e of exts){
             var i = path.lastIndexOf(e);
             if(i>=0 && i==path.length-e.length){
-                return e;
+                ext = e;
+                break;
             }
         }
-        if(path.lastIndexOf('.')>0){
-            return path.substring(path.lastIndexOf('.'));
+        if(!ext && path.lastIndexOf('.')>0){
+            ext = path.substring(path.lastIndexOf('.'));
         }
+        return ext;
     }
     static getType(path){
         var exts = Object.keys(EXTS);
@@ -86,7 +88,9 @@ export class Source {
         }
     }
     get script(){
-        return this.files['.js'];
+        if(this.js){
+            return this.js.content.toString();
+        }
     }
 
     get resources(){
@@ -100,6 +104,12 @@ export class Source {
         this.project = project;
         this.name = name;
         this.files = {};
+    }
+    bundle(maps:boolean=false){
+        if(this.script){
+            var mapBase64 = new Buffer(this.map.content.toString()).toString('base64');
+            return this.script.replace(/\/\/#\s+sourceMappingURL=(.*)\n?/g, `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`).trim()
+        }
     }
     mapTo(dir){
         if(this.map) {

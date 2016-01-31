@@ -17,6 +17,54 @@ const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
 
+const BUNDLE = `(function(main,scripts){
+    var evaluate;
+    if(typeof window!='undefined'){
+        evaluate = function evaluate(name,content){
+            var aMain = document.querySelector('script[main]');
+            aMain.removeAttribute('main');
+            aMain = aMain.src.split('/');
+            aMain.pop();
+            aMain =  aMain.join('/');
+            var aHead = document.querySelector('head');
+            var aScript = document.createElement('script');
+            aScript.type = 'text/javascript';
+            aScript.id = name;
+            aScript.setAttribute('main',true);
+
+            aScript.text = content+'\\n//# sourceURL='+aMain+'/'+name+'.js'
+            aHead.appendChild(aScript);
+            aScript.setAttribute('src',aMain+'/'+name+'.js');
+        }
+    }else{
+        evaluate = function evaluate(name,content){
+            var context = {
+                Buffer      : Buffer,
+                require     : require,
+                process     : process,
+                console     : console,
+                global      : global,
+                __filename  : __filename,
+                __dirname   : __dirname
+            };
+            require('vm').runInNewContext(content,context,{
+                filename : __dirname+'/'+name+'.js'
+            });
+        }
+    }
+    var runtimeName = 'runtime/package';
+    var runtimeScript = scripts[runtimeName];
+    delete scripts[runtimeName];
+    evaluate(runtimeName,runtimeScript);
+    System.bundle(scripts);
+    System.import(main).then(function(r){
+        console.info(r);
+    }).catch(function(e){
+        console.info(e.stack||e);
+    });
+})`;
+
+
 export type Sources = {[k:string]:Source};
 export type Deps = {[k:string]:Project};
 
@@ -204,12 +252,14 @@ export class Project {
         this.watchSources();
     }
     public compile(bundle?:boolean){
-        this.clean();
-        this.readFs();
-        this.compileSources();
         if(bundle){
+            this.readFs();
+            this.compileSources();
             this.bundleSources();
         }else{
+            this.clean();
+            this.readFs();
+            this.compileSources();
             this.writeSources();
             this.writePackage();
         }
@@ -342,12 +392,14 @@ export class Project {
                 file.from       = 'git';
                 file.name       = Source.getName(file.path);
                 file.ext        = Source.getExt(file.path);
-                file.content    = this.git.readFile(file.sha);
-                var source = this.sources[file.name];
-                if(!source){
-                    source = this.sources[file.name] = new Source(this.name,file.name,main);
+                if(file.ext){
+                    file.content    = this.git.readFile(file.sha);
+                    var source = this.sources[file.name];
+                    if(!source){
+                        source = this.sources[file.name] = new Source(this.name,file.name,main);
+                    }
+                    source.addFile(file);
                 }
-                source.addFile(file);
             }
         }
     }
@@ -360,12 +412,14 @@ export class Project {
                 file.from = 'file';
                 file.name = Source.getName(file.path);
                 file.ext = Source.getExt(file.path);
-                file.content = FileSystem.readFile(f);
-                var source = this.sources[file.name];
-                if(!source){
-                    source = this.sources[file.name] = new Source(this.name,file.name,main);
+                if(file.ext){
+                    file.content = FileSystem.readFile(f);
+                    var source = this.sources[file.name];
+                    if(!source){
+                        source = this.sources[file.name] = new Source(this.name,file.name,main);
+                    }
+                    source.addFile(file);
                 }
-                source.addFile(file);
             }
         })
     }
@@ -410,23 +464,24 @@ export class Project {
                 var path = FileSystem.resolve(this.sourceDir,f);
                 var file:any = {path:f};
                 if(FileSystem.exists(path)){
-
                     file.from = 'file';
                     file.name = Source.getName(file.path);
                     file.ext = Source.getExt(file.path);
-                    file.content = FileSystem.readFile(path).toString();
-                    var source = this.sources[file.name];
-                    if(!source){
-                        source = this.sources[file.name] = new Source(this.name,file.name,true);
+                    if(file.ext){
+                        file.content = FileSystem.readFile(path).toString();
+                        var source = this.sources[file.name];
+                        if(!source){
+                            source = this.sources[file.name] = new Source(this.name,file.name,true);
+                        }
+                        source.addFile(file);
+                        var diagnostics = this.compiler.compile();
+                        if(diagnostics.length){
+                            console.info('FAILED   :',file.path);
+                        }else{
+                            console.info('COMPILED :',file.path);
+                        }
+                        this.writeSource(source);
                     }
-                    source.addFile(file);
-                    var diagnostics = this.compiler.compile();
-                    if(diagnostics.length){
-                        console.info('FAILED   :',file.path);
-                    }else{
-                        console.info('COMPILED :',file.path);
-                    }
-                    this.writeSource(source);
                 }else{
                     console.info('DELETED  :',file.path);
                 }
@@ -435,29 +490,17 @@ export class Project {
             }
         },true);
     }
+
     private bundleSources(){
-        var runtime,sources={};
+        var sources={};
         this.sourcesAll.forEach(s=>{
-            if(s.project=='runtime'){
-                runtime = s.js.content.toString().replace(/\/\/#\s+sourceMapping.*\n?/g,'').trim();
-            }else
-            if(s.js && s.js.content){
-                sources[s.uri] = s.js.content.toString();
-            }
+            sources[s.uri] = s.bundle(true);
         });
-        var bundle = `System.bundle(${JSON.stringify(sources,null,'  ')});`;
-        var execute = `System.run("${this.main}");`;
-        var content = [
-            '//Runtime',
-            runtime,
-            '//Bundle',
-            bundle,
-            '//Execution',
-            execute
-        ].join('\n');
-        var file = FileSystem.resolve(this.vendorDir,this.name,'package.js');
+        var content = `${BUNDLE}('${this.main}',${JSON.stringify(sources,null,2)});`;
+        var file = FileSystem.resolve(this.dirname,'bundle.js');
         FileSystem.writeFile(file,content);
     }
+
     private writePackage(){
         var json = this.compilePackage();
         var packFile = FileSystem.resolve(this.vendorDir,this.name,'package.json');
