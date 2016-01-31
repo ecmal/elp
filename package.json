@@ -2,7 +2,7 @@
   "name"          : "elp",
   "vendor"        : "ecmal",
   "registry"      : "github",
-  "version"       : "0.0.2",
+  "version"       : "0.0.4",
   "author"        : "Sergey Mamyan <sergey.mamyan@gmail.com>",
   "homepage"      : "https://github.com/ecmal/elp#readme",
   "license"       : "ISC",

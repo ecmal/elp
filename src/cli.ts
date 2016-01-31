@@ -18,7 +18,7 @@ import services from './services';
 
 config.load().then(config=>{
     return services.load(config).then(()=>{
-        return cli('espm','1.0.0');
+        return cli('elp','0.0.4');
     })
 }).catch(e=>console.error(e.stack));
 
