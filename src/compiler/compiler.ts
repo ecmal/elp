@@ -15,14 +15,13 @@ export class Compiler implements TS.CompilerHost {
     getSourceFile(fileName: string, target: TS.ScriptTarget, onError?: (message: string) => void): TS.SourceFile {
         var uri = Source.getName(fileName);
         if(fileName=='package.d.ts'){
-            var definitions = [];
+            var definitions = [],defs=[];
             Object.keys(this.sources).forEach(s=>{
                 var source = this.sources[s];
-                if(source.uri.match(/^(.*)\/package$/)){
-                    if(source.tsd && source.tsd.content){
-                        definitions.push(`//${source.project}/package.d.ts`);
-                        definitions.push(source.tsd.content.toString());
-                    }
+                if(source.name =='package' && source.tsd && source.tsd.content){
+                    defs.push(`${source.project}/${source.name}.d.ts`);
+                    definitions.push(`//${source.project}/package.d.ts`);
+                    definitions.push(source.tsd.content.toString());
                 }
             });
             return TS.createSourceFile(fileName,definitions.join('\n'),target);
@@ -118,7 +117,6 @@ export class Compiler implements TS.CompilerHost {
             };
         });
     }
-
 
     private project:Project;
     private program:TS.Program;

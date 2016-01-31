@@ -3,15 +3,18 @@ import {Repository} from "../utils/git";
 import {Remotes} from "../utils/git";
 import {Status} from "../utils/git";
 import {Compiler} from "../compiler/compiler";
+//import {Watcher} from "../compiler/watcher";
 import {Source} from "./source";
 import {Registry} from "./registry";
 import {Url} from "./url";
 import {Library} from "./library";
 
+
 const crypto = require('crypto');
 const FILE:symbol = Symbol('file');
 const CONFIG:symbol = Symbol('config');
 const COMPILER:symbol = Symbol('compiler');
+//const WATCHER:symbol = Symbol('watcher');
 const SOURCES:symbol = Symbol('sources');
 const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
@@ -167,6 +170,13 @@ export class Project {
         }
         return c;
     }
+    /*get watcher():Watcher{
+        var c=this[WATCHER];
+        if(!c){
+            c = this[WATCHER] = new Watcher(this);
+        }
+        return c;
+    }*/
     get remotes():Remotes{
         return this.git.remotes();
     }
@@ -244,10 +254,9 @@ export class Project {
     public watch(){
         this.clean();
         this.readFs();
-        this.compileSources();
+        this.watchSources();
         this.writeSources();
         this.writePackage();
-        this.watchSources();
     }
     public compile(bundle?:boolean,exec?:boolean){
         if(bundle){
@@ -450,14 +459,20 @@ export class Project {
             console.info('COMPILED');
         }
     }
+
     private writeSources(){
         this.sourcesSelf.forEach(s=>{
             this.writeSource(s);
         });
     }
-
     private watchSources(){
-        console.info('WATCHING');
+        var diagnostics = this.compiler.compile();
+        if(diagnostics.length){
+            console.info('FAILED');
+        }else{
+            console.info('COMPILED');
+        }
+        console.info('WATCHING',this.sourceDir);
         FileSystem.watchDir(this.sourceDir,(e,f)=>{
             try{
                 var path = FileSystem.resolve(this.sourceDir,f);
