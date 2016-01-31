@@ -18,12 +18,13 @@ export class Compiler implements TS.CompilerHost {
             var definitions = [],defs=[];
             Object.keys(this.sources).forEach(s=>{
                 var source = this.sources[s];
-                if(source.name =='package' && source.tsd && source.tsd.content){
+                if(source.name =='package' && source.tsd && source.tsd.content && !(this.project.bundle && source.project==this.project.name)){
                     defs.push(`${source.project}/${source.name}.d.ts`);
                     definitions.push(`//${source.project}/package.d.ts`);
                     definitions.push(source.tsd.content.toString());
                 }
             });
+            //console.info(defs);
             return TS.createSourceFile(fileName,definitions.join('\n'),target);
         }else{
             var source = this.sources[uri];
@@ -49,14 +50,20 @@ export class Compiler implements TS.CompilerHost {
         if(ext=='.js.map'){
             try {
                 var map = JSON.parse(data);
-                delete map.sourceRoot;
-                map.sources = map.sources.map(n=> {
-                    if (n.indexOf(this.project.name + '/') == 0) {
-                        return n.replace(this.project.name + '/', './');
-                    } else {
-                        return './' + n;
-                    }
-                });
+                map.sourceRoot = source.dirname||this.project.sourceDir;
+                //delete map.sourceRoot;
+                if(map.sources.length>0) {
+                    map.sources = map.sources.map(n=> {
+                        var name = Source.getName(n);
+                        var ext = Source.getExt(n);
+                        var src = this.sources[name];
+                        if(src) {
+                            return src.name + ext;
+                        }else{
+                            return n;
+                        }
+                    });
+                }
                 data = JSON.stringify(map, null, 2);
             }catch(e){
                 console.info(e.stack);

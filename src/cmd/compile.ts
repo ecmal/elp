@@ -2,8 +2,6 @@ import {Command} from './command';
 import {Option} from './command';
 import {Cli} from "./command";
 
-import {FileSystem} from "../utils/fs";
-import {Compiler} from "../compiler/compiler";
 import {Project} from "../models/project";
 
 @Command({
@@ -34,11 +32,25 @@ export class Compile extends Cli {
     })
     output:boolean=false;
 
+    @Option({
+        alias    : 't',
+        title    : 'Include Tests'
+    })
+    tests:boolean=false;
+
     execute(path:string=this.cwd){
+        var project:Project = Project.read(path);
+
+        if(this.output){
+            project.dirs.vendor = this.output;
+        }
+
         if(this.watch){
-            Project.read(path).watch();
+            console.info(`Watching  "${project.name}" into "${project.vendorDir}"`);
+            project.watch(this.tests);
         }else{
-            Project.read(path).compile();
+            console.info(`Compiling "${project.name}" into "${project.vendorDir}"`);
+            project.compile(this.tests);
         }
     }
 

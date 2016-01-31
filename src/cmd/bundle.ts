@@ -28,7 +28,7 @@ export class Bundle extends Cli {
     output:boolean=false;
 
     execute(path:string=this.cwd){
-        Project.read(path).compile(true,true);
+        Project.read(path).compile(false,true,true);
     }
 
 }

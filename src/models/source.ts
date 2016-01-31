@@ -55,6 +55,7 @@ export class Source {
     }
     public name:string;
     public project:string;
+    public dirname:string;
     public files:any;
     public main:boolean;
     get uri(){

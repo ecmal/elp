@@ -170,13 +170,6 @@ export class Project {
         }
         return c;
     }
-    /*get watcher():Watcher{
-        var c=this[WATCHER];
-        if(!c){
-            c = this[WATCHER] = new Watcher(this);
-        }
-        return c;
-    }*/
     get remotes():Remotes{
         return this.git.remotes();
     }
@@ -217,29 +210,62 @@ export class Project {
     }
     get dirs(){
         if(!this.config.directories){
-            this.config.directories = {
-                source  : './src',
-                vendor  : './lib',
-                tests   : './test'
-            }
+            this.config.directories = {}
         }
         return this.config.directories;
     }
     get main():string{
         return `${this.name}/${this.config.main||'index'}`;
     }
+
     constructor(path){
         this[FILE] = path;
     }
 
     get sourceDir():string {
-        return FileSystem.resolve(this.dirname,this.dirs.source);
+        var srcDir = this.dirs.source;
+        if(!srcDir){
+            if(FileSystem.isDir(FileSystem.resolve(this.dirname,'./src'))){
+                srcDir = './src'
+            }else
+            if(FileSystem.isDir(FileSystem.resolve(this.dirname,'./source'))){
+                srcDir = './source'
+            }else
+            if(FileSystem.isDir(FileSystem.resolve(this.dirname,'./sources'))){
+                srcDir = './sources'
+            }
+            this.dirs.source = srcDir;
+        }
+        if(srcDir){
+            return FileSystem.resolve(this.dirname,srcDir);
+        }else{
+            throw new Error('source directory not specified');
+        }
+    }
+    get testsDir():string {
+        var testDir = this.dirs.tests;
+        if(!testDir){
+            if(FileSystem.isDir(FileSystem.resolve(this.dirname,'./test'))){
+                testDir = './test'
+            }else
+            if(FileSystem.isDir(FileSystem.resolve(this.dirname,'./tests'))){
+                testDir = './tests'
+            }
+            this.dirs.tests = testDir;
+        }
+        if(testDir){
+            return FileSystem.resolve(this.dirname,testDir);
+        }
     }
     set sourceDir(v:string){
         this.dirs.source = FileSystem.relative(this.dirname,v);
     }
     get vendorDir():string {
-        return FileSystem.resolve(this.dirname,this.dirs.vendor);
+        var venDir = this.dirs.vendor;
+        if(!venDir){
+            venDir = this.dirs.vendor = './out';
+        }
+        return FileSystem.resolve(this.dirname,venDir);
     }
     get outputDir():string{
         return FileSystem.resolve(this.vendorDir,this.name);
@@ -251,21 +277,23 @@ export class Project {
         }
         return this;
     }
-    public watch(){
+    public watch(tests:boolean=false){
+        tests = tests && !!this.testsDir;
         this.clean();
-        this.readFs();
-        this.watchSources();
+        this.readFs(tests);
+        this.watchSources(tests);
         this.writeSources();
         this.writePackage();
     }
-    public compile(bundle?:boolean,exec?:boolean){
+    public compile(tests:boolean=false,bundle:boolean=false,exec:boolean=false){
+        tests = tests && !!this.testsDir;
         if(bundle){
             this.readFs();
             this.compileSources();
             this.bundleSources(exec);
         }else{
             this.clean();
-            this.readFs();
+            this.readFs(tests);
             this.compileSources();
             this.writeSources();
             this.writePackage();
@@ -373,9 +401,9 @@ export class Project {
     private inspect(){
         return this.toString(true)
     }
-    private readFs(){
+    private readFs(tests:boolean=false){
         this.readDependencies();
-        this.readSourcesFromFs();
+        this.readSourcesFromFs(tests);
         return Object.keys(this.sources);
     }
     private readGit(branch?){
@@ -383,14 +411,7 @@ export class Project {
         this.readSourcesFromGit(branch);
         return Object.keys(this.sources);
     }
-    private readSources(branch?,main?){
-        if(main){
-            this.readSourcesFromGit(branch,main);
-        }else{
-            this.readSourcesFromFs(main);
-        }
-        //this.readSourcesFromFs(branch,main);
-    }
+
     private readSourcesFromGit(branch='HEAD',main:boolean=true){
         if(this.git){
             var files = this.git.readDir(branch,this.dirs.source);
@@ -410,7 +431,7 @@ export class Project {
             }
         }
     }
-    private readSourcesFromFs(main?){
+    private readSourcesFromFs(tests:boolean=false,main:boolean=false){
         FileSystem.readDir(this.sourceDir,true).forEach(f=>{
             var file:any = {
                 path : FileSystem.relative(this.sourceDir,f)
@@ -428,7 +449,28 @@ export class Project {
                     source.addFile(file);
                 }
             }
-        })
+        });
+        if(tests){
+            FileSystem.readDir(this.testsDir,true).forEach(f=>{
+                var file:any = {
+                    path : FileSystem.relative(this.testsDir,f)
+                };
+                if(file.path!='package.json'){
+                    file.from = 'file';
+                    file.name = Source.getName(file.path);
+                    file.ext = Source.getExt(file.path);
+                    if(file.ext){
+                        file.content = FileSystem.readFile(f);
+                        var source = this.sources[file.name];
+                        if(!source){
+                            source = this.sources[file.name] = new Source(this.name,file.name,main);
+                            source.dirname = FileSystem.dirname(f)
+                        }
+                        source.addFile(file);
+                    }
+                }
+            });
+        }
     }
     private readDependencies(){
         var deps = {};
@@ -443,7 +485,7 @@ export class Project {
                                 vendor  : '..'
                             }
                         });
-                        project.readSourcesFromFs(false);
+                        project.readSourcesFromFs(false,false);
                         deps[project.name] = project;
                     }
                 }
@@ -465,17 +507,17 @@ export class Project {
             this.writeSource(s);
         });
     }
-    private watchSources(){
+    private watchSources(tests:boolean=false){
         var diagnostics = this.compiler.compile();
         if(diagnostics.length){
             console.info('FAILED');
         }else{
             console.info('COMPILED');
         }
-        console.info('WATCHING',this.sourceDir);
-        FileSystem.watchDir(this.sourceDir,(e,f)=>{
+        var listener = (t,e,f)=>{
             try{
-                var path = FileSystem.resolve(this.sourceDir,f);
+                var from = t?'test':'main';
+                var path = FileSystem.resolve(t?this.testsDir:this.sourceDir,f);
                 var file:any = {path:f};
                 if(FileSystem.exists(path)){
                     file.from = 'file';
@@ -486,23 +528,35 @@ export class Project {
                         var source = this.sources[file.name];
                         if(!source){
                             source = this.sources[file.name] = new Source(this.name,file.name,true);
+                            source.dirname = FileSystem.dirname(path)
                         }
                         source.addFile(file);
                         var diagnostics = this.compiler.compile();
                         if(diagnostics.length){
-                            console.info('FAILED   :',file.path);
+                            console.info(`FAILED   ${from} : ${file.path}`);
                         }else{
-                            console.info('COMPILED :',file.path);
+                            console.info(`COMPILED ${from} : ${file.path}`);
                         }
-                        this.writeSource(source);
+                        if(this.bundle){
+                            this.writeSource(this.sources['package']);
+                        }else{
+                            this.writeSource(source);
+                        }
                     }
                 }else{
-                    console.info('DELETED  :',file.path);
+                    console.info(`DELETED  :${from} : ${file.path}`);
                 }
             }catch(ex){
                 console.info(ex.stack);
             }
-        },true);
+        };
+        console.info('WATCHING');
+        console.info(' * '+this.sourceDir);
+        FileSystem.watchDir(this.sourceDir,(e,f)=>listener(false,e,f),true);
+        if(tests){
+            console.info(' * '+this.testsDir);
+            FileSystem.watchDir(this.testsDir,(e,f)=>listener(true,e,f),true);
+        }
     }
 
     private bundleSources(exec?:boolean,filename?:string){

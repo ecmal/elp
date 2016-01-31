@@ -10,6 +10,7 @@ import './cmd/cache';
 import './cmd/clone';
 import './cmd/remotes';
 import './cmd/bundle';
+import './cmd/run';
 
 
 import cli from './cmd/command';
