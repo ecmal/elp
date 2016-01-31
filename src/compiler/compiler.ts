@@ -172,8 +172,8 @@ export class Compiler implements TS.CompilerHost {
         });
         var sources = this.project.sourcesSelf.filter(s=>s.ts||s.tsx).map(s=>s.uri+'.ts');
         this.program = TS.createProgram(sources,this.options,this,this.program);
-
         var diagnostics:Array<TS.Diagnostic> = [];
+        var result = this.program.emit();
         this.program.getSourceFiles().forEach(s=>{
             var d = [];
             d = d.concat(this.program.getSyntacticDiagnostics(s)||[]);
@@ -185,7 +185,7 @@ export class Compiler implements TS.CompilerHost {
         });
         diagnostics = diagnostics.concat(this.program.getGlobalDiagnostics());
         diagnostics = diagnostics.concat(this.program.getOptionsDiagnostics());
-        var result = this.program.emit();
+
         if(result.diagnostics && result.diagnostics.length){
             diagnostics = diagnostics.concat(result.diagnostics);
         }
@@ -217,7 +217,7 @@ export class Compiler implements TS.CompilerHost {
                 console.info(`  ${category} ${d.code}${file}${message}`);
             }
             if(diagnostics.length>len){
-                console.info(`  ${diagnostics.length-len} more`);
+                console.info(`  ... ${diagnostics.length-len} more`);
             }
         }
         return diagnostics;

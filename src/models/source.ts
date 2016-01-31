@@ -107,8 +107,12 @@ export class Source {
     }
     bundle(maps:boolean=false){
         if(this.script){
-            var mapBase64 = new Buffer(this.map.content.toString()).toString('base64');
-            return this.script.replace(/\/\/#\s+sourceMappingURL=(.*)\n?/g, `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`).trim()
+            if(this.map && this.map.content){
+                var mapBase64 = new Buffer(this.map.content.toString()).toString('base64');
+                return this.script.replace(/\n+\/\/#\s+sourceMappingURL=(.*)\n?/g, `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`).trim()
+            }else{
+                return this.script.replace(/\n+\/\/#\s+sourceMappingURL=.*\n?/g, ``).trim()
+            }
         }
     }
     mapTo(dir){

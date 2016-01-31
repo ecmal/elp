@@ -1,4 +1,6 @@
 build
 src
 doc
+out
+index.js
 .gitignore

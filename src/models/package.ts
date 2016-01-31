@@ -15,7 +15,6 @@ export class Package {
         }
         return pack;
     }
-
     private internal:any;
     private json:any;
     public path:string;

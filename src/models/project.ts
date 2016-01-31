@@ -57,9 +57,7 @@ const BUNDLE = `(function(main,scripts){
     delete scripts[runtimeName];
     evaluate(runtimeName,runtimeScript);
     System.bundle(scripts);
-    System.import(main).then(function(r){
-        console.info(r);
-    }).catch(function(e){
+    System.import(main).catch(function(e){
         console.info(e.stack||e);
     });
 })`;
@@ -251,11 +249,11 @@ export class Project {
         this.writePackage();
         this.watchSources();
     }
-    public compile(bundle?:boolean){
+    public compile(bundle?:boolean,exec?:boolean){
         if(bundle){
             this.readFs();
             this.compileSources();
-            this.bundleSources();
+            this.bundleSources(exec);
         }else{
             this.clean();
             this.readFs();
@@ -457,6 +455,7 @@ export class Project {
             this.writeSource(s);
         });
     }
+
     private watchSources(){
         console.info('WATCHING');
         FileSystem.watchDir(this.sourceDir,(e,f)=>{
@@ -491,16 +490,15 @@ export class Project {
         },true);
     }
 
-    private bundleSources(){
+    private bundleSources(exec?:boolean,filename?:string){
         var sources={};
         this.sourcesAll.forEach(s=>{
             sources[s.uri] = s.bundle(true);
         });
         var content = `${BUNDLE}('${this.main}',${JSON.stringify(sources,null,2)});`;
-        var file = FileSystem.resolve(this.dirname,'bundle.js');
-        FileSystem.writeFile(file,content);
+        var file = filename||FileSystem.resolve(this.dirname,'bundle.js');
+        FileSystem.writeFile(file,(exec?'#!/usr/bin/env node\n':'')+content);
     }
-
     private writePackage(){
         var json = this.compilePackage();
         var packFile = FileSystem.resolve(this.vendorDir,this.name,'package.json');

@@ -31,6 +31,7 @@ export class Config {
             FS.createDir(this.home);
         }
     }
+
     private checkConfig(){
         if(!FS.isFile(this.config)){
             FS.writeJson(this.config,this.settings);
