@@ -161,6 +161,7 @@ export class Compiler implements TS.CompilerHost {
 
         return <TS.CompilerOptions> {
             experimentalDecorators  : true,
+            emitDecoratorMetadata   : true,
             module                  : modFormat,
             target                  : modTarget,
             declaration             : true,
