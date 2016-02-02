@@ -19,7 +19,7 @@ import services from './services';
 
 config.load().then(config=>{
     return services.load(config).then(()=>{
-        return cli('elp','0.0.4');
+        return cli('elp','0.0.5');
     })
 }).catch(e=>console.error(e.stack));
 
