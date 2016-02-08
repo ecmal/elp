@@ -97,15 +97,27 @@ export class Run extends Cli {
             cwd     : project.vendorDir,
             silent  : true
         });
+        var outFirst = true;
+        var errFirst = true;
         child.stderr.on('data',(data)=>{
-            data.toString().split(/\n/).forEach(l=>{
-                process.stderr.write('err | '+this.format(l)+'\n');
-            });
+            process.stderr.write(data.toString().split(/\n/).map((l,i)=>{
+                if(errFirst || i>0){
+                    errFirst = false;
+                    return `err | ${this.format(l)}`;
+                }else{
+                    return this.format(l);
+                }
+            }).join('\n'));
         });
         child.stdout.on('data', (data)=>{
-            data.toString().split(/\n/).forEach(l=>{
-                process.stdout.write('out | '+this.format(l)+'\n');
-            });
+            process.stdout.write(data.toString().split(/\n/).map((l,i)=>{
+                if(outFirst || i>0){
+                    outFirst = false;
+                    return `out | ${this.format(l)}`;
+                }else{
+                    return this.format(l);
+                }
+            }).join('\n'));
         });
         child.on('close', (...args)=>{
             console.info('close',...args)
