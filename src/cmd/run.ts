@@ -66,10 +66,12 @@ export class Run extends Cli {
                 mapJson = this.maps[path] = Run.SM.SourceMapConsumer(
                     JSON.parse(FileSystem.readFile(mapPath))
                 );
+                var pos:any = mapJson.originalPositionFor({line,column});
+                return `${pos.source}:${pos.line}:${pos.column}`;
             }
         }
-        var pos:any = mapJson.originalPositionFor({line,column});
-        return `${pos.source}:${pos.line}:${pos.column}`;
+        return `${path}:${line}:${column}`;
+
     }
 
     private get regexp():RegExp{
