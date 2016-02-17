@@ -7,5 +7,6 @@ try{
         });
 }catch(e){
     console.info("in production mode use 'elp' instead of 'elpd'");
+    console.info(e.stack||e);
 }
 

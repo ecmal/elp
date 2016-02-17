@@ -588,10 +588,12 @@ export class Project {
             var status = this.git.status();
             var config = this.git.config();
             json.author = config.user;
-            json.commit = status.remote.commit;
-            var repoUrl = config.remote[status.remote.name].url;
-            json.repository = repoUrl;
-            json.registry = Registry.for(repoUrl).id;
+            if(status.remote){
+                json.commit = status.remote.commit;
+                var repoUrl = config.remote[status.remote.name].url;
+                json.repository = repoUrl;
+                json.registry = Registry.for(repoUrl).id;
+            }
         }
         json.modules = {};
         this.sourcesSelf.forEach(s=>{
