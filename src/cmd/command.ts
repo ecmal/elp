@@ -1,3 +1,5 @@
+const process = system.node.process;
+
 const OPTIONS:symbol = Symbol();
 const COMMAND:symbol = Symbol();
 const COMMANDS = [];
@@ -20,7 +22,7 @@ export function Command(settings?):any{
     }
     return target=>{
         if(!settings.name){
-            settings.name = String(target.name)
+            settings.name = String(target.class.name)
                 .replace(/([A-Z])/g,a=>'-'+a)
                 .toLowerCase()
                 .replace(/\-(.*)/,'$1');
@@ -37,7 +39,7 @@ export function Command(settings?):any{
             }
         }
         target[COMMAND] = settings;
-        if(target.name!='Cli'){
+        if(target.class.name!='Cli'){
             COMMANDS.push(target);
         }
     }

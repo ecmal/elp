@@ -12,14 +12,13 @@ import './cmd/remotes';
 import './cmd/bundle';
 import './cmd/run';
 
-
 import cli from './cmd/command';
 import config from './config';
 import services from './services';
 
 config.load().then(config=>{
     return services.load(config).then(()=>{
-        return cli('elp','0.0.5');
+        return cli('elp','0.0.8');
     })
 }).catch(e=>console.error(e.stack));
 

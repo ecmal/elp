@@ -10,25 +10,31 @@ import {Project} from "../models/project";
     args   : '[path]',
     usage  : [`
     Usage :
-    |  espm compile [options] [path]
+    |  elp compile [options] [path]
     |
     Examples :
-    |  espm compile
-    |  espm compile ./my-module
-    |  espm compile -o ./my/out/dir ./my-module/package.json
+    |  elp compile
+    |  elp compile ./my-module
+    |  elp compile -o ./my/out/dir ./my-module/package.json
     `]
 })
 export class Bundle extends Cli {
 
     @Option({
-        alias    : 'o',
-        args     : 'dir',
+        alias    : 'f',
+        args     : 'file',
         title    : 'Output directory'
     })
-    output:boolean=false;
+    file:string;
+
+    @Option({
+        alias    : 'e',
+        title    : 'Output directory'
+    })
+    executable:boolean;
 
     execute(path:string=this.cwd){
-        Project.read(path).compile(false,true,true);
+        Project.read(path).compile(false,this.file||'bundle.js',!!this.executable);
     }
 
 }

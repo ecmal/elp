@@ -7,7 +7,7 @@ import {Cli} from "./command";
     args   : '<package,...>',
     usage  : [`
     Usage  :
-    |  espm clone [options] [path]
+    |  elp clone [options] [path]
     `]
 })
 export class Remotes extends Cli {

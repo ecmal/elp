@@ -11,7 +11,7 @@ import {Registry} from "../models/registry";
     args   : '<package,...>',
     usage  : [`
     Usage :
-    |  espm show [options] alias=registry:project@version
+    |  elp show [options] alias=registry:project@version
     `]
 })
 export class Show extends Cli {

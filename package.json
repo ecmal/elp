@@ -2,7 +2,7 @@
   "name"          : "elp",
   "vendor"        : "ecmal",
   "registry"      : "github",
-  "version"       : "0.0.6",
+  "version"       : "0.0.8",
   "author"        : "Sergey Mamyan <sergey.mamyan@gmail.com>",
   "homepage"      : "https://github.com/ecmal/elp#readme",
   "license"       : "ISC",
@@ -15,15 +15,15 @@
     "elpd"        : "index.js",
     "elp"         : "bundle.js"
   },
-  "main"          : "cli",
+  "main"          : "elp/cli",
   "directories"   : {
     "source"      : "src",
     "vendor"      : "out"
   },
   "libraries"     : {
-    "core"        : "0.0.1",
-    "node"        : "0.0.1",
-    "compiler"    : "0.0.1",
-    "runtime"     : "0.0.2"
+    "core"        : "0.0.8",
+    "node"        : "0.0.8",
+    "compiler"    : "0.0.8",
+    "runtime"     : "0.0.8"
   }
 }

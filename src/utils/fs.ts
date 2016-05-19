@@ -1,9 +1,8 @@
 
-
 export class FileSystem {
-    private static fs = require('fs');
-    private static path = require('path');
-    private static crypto = require('crypto');
+    private static fs = system.node.require('fs');
+    private static path = system.node.require('path');
+    private static crypto = system.node.require('crypto');
     static resolve(...paths:string[]):string{
         return this.path.resolve(...paths);
     }
@@ -65,7 +64,7 @@ export class FileSystem {
     }
     static copyDir(fromDir,toDir){
         this.readDir(fromDir,true).forEach(f=>{
-            var t = this.resolve(toDir,this.relative(fromDir,f));
+            var t = FileSystem.resolve(toDir,FileSystem.relative(fromDir,f));
             this.copyFile(f,t);
         })
     }
@@ -138,7 +137,7 @@ export class FileSystem {
         return this.crypto.createHash('md5').update(this.readFile(path)).digest("hex");
     }
     static readJson(path:string):any {
-        return JSON.parse(this.fs.readFileSync(path));
+        return JSON.parse(this.fs.readFileSync(path,'utf8').toString());
     }
 }
 export default FileSystem;

@@ -1,18 +1,17 @@
 import {Command} from './command';
-import {Option} from './command';
 import {Cli} from "./command";
 import {Library} from "../models/library";
 import {Url} from "../models/url";
-import {Registry} from "../models/registry";
 import FileSystem from "../utils/fs";
 
+const process = system.node.process;
 
 @Command({
     title  : 'Clone Package',
     args   : '<package,...>',
     usage  : [`
     Usage  :
-    |  espm clone [options] [path]
+    |  elp clone [options] [path]
     `]
 })
 export class Clone extends Cli {

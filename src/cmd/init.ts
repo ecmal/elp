@@ -6,10 +6,10 @@ import {Cli} from "./command";
     title  : 'Initialize Package',
     usage  : [`
     Usage :
-    |  espm init [options]
+    |  elp init [options]
     |
     Examples :
-    |  espm init -n my-app
+    |  elp init -n my-app
     `]
 })
 export class Init extends Cli {

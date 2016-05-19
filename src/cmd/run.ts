@@ -5,8 +5,8 @@ import {Cli} from "./command";
 import {Project} from "../models/project";
 import {FileSystem} from "../utils/fs";
 
-import * as CP from "node/child_process";
-
+const process = system.node.process;
+const CP = system.node.require('child_process');
 
 const RUN_SCRIPT = `
 require('./runtime/package');
@@ -22,19 +22,19 @@ System.import('§MAIN§').catch(function(e){
     args   : '[path]',
     usage  : [`
     Usage :
-    |  espm compile [options] [path]
+    |  elp compile [options] [path]
     |
     Examples :
-    |  espm compile
-    |  espm compile ./my-module
-    |  espm compile -o ./my/out/dir ./my-module/package.json
+    |  elp compile
+    |  elp compile ./my-module
+    |  elp compile -o ./my/out/dir ./my-module/package.json
     `]
 })
 export class Run extends Cli {
     static get SM():any{
         if(typeof this['SourceMap']=='undefined'){
             try {
-                this['SourceMap'] = require('source-map');
+                this['SourceMap'] = system.node.require('source-map');
             }catch(e){
                 this['SourceMap'] = false;
             }

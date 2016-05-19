@@ -3,6 +3,8 @@ import {Registry} from "./models/registry";
 import {BitbucketRegistry} from "./models/registry";
 import {GithubRegistry} from "./models/registry";
 
+const process = system.node.process;
+
 export class Config {
 
     public name : string;
@@ -16,15 +18,27 @@ export class Config {
         path : process.env.PATH
     };
     public settings:any = {
-        username : process.env.USER,
-        password : ''
+        username     : "none",
+        password     : "none",
+        github       : {
+            url      : "https://github.com",
+            pattern  : "https://github.com/%{vendor}/%{project}.git",
+            username : "none",
+            password : "none"
+        },
+        bitbucket    : {
+            url      : "https://bitbucket.org",
+            pattern  : "https://bitbucket.org/%{vendor}/%{project}.git",
+            username : "none",
+            password : "none"
+        }
     };
     constructor(){
-        this.name = 'espm';
+        this.name = 'elp';
         this.home = FS.resolve(this.env.home,'.'+this.name);
         this.config = FS.resolve(this.home,'config.json');
-        this.dirname = __dirname;
-        this.filename = __filename;
+        this.dirname = system.node.dirname;
+        this.filename = system.node.filename;
     }
     private checkHome(){
         if(!FS.isDir(this.home)){

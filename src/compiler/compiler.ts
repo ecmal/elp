@@ -14,11 +14,12 @@ export class Compiler implements TS.CompilerHost {
     }
     getSourceFile(fileName: string, target: TS.ScriptTarget, onError?: (message: string) => void): TS.SourceFile {
         var uri = Source.getName(fileName);
-        if(fileName=='package.d.ts'){
+        if(fileName=='$.d.ts'){
             var definitions = [],defs=[];
             Object.keys(this.sources).forEach(s=>{
                 var source = this.sources[s];
-                if(source.name =='package' && source.tsd && source.tsd.content && !(this.project.bundle && source.project==this.project.name)){
+                if(source.name =='package' && source.tsd && source.tsd.content &&
+                    !(this.project.bundle && source.project==this.project.name)){
                     defs.push(`${source.project}/${source.name}.d.ts`);
                     definitions.push(`//${source.project}/package.d.ts`);
                     definitions.push(source.tsd.content.toString());
@@ -29,14 +30,16 @@ export class Compiler implements TS.CompilerHost {
         }else{
             var source = this.sources[uri];
             if(source){
+                //console.info(fileName);
                 return TS.createSourceFile(fileName,source.content,target);
             }
         }
     }
     getDefaultLibFileName(options: TS.CompilerOptions): string {
-        return `package.d.ts`;
+        return `$.d.ts`;
     }
     writeFile(fileName: string, data: string, writeByteOrderMark: boolean, onError?: (message: string) => void): void{
+        fileName = fileName.replace('./','');
         if(fileName.indexOf(this.project.name+'/')==0){
             fileName = fileName.replace(this.project.name+'/','');
         }
@@ -135,7 +138,6 @@ export class Compiler implements TS.CompilerHost {
         this.sources = {};
     }
     get options():TS.CompilerOptions{
-
         var modFormat:TS.ModuleKind  = TS.ModuleKind.System;
         if(this.project.format){
             switch(this.project.format.toUpperCase()){
@@ -158,17 +160,24 @@ export class Compiler implements TS.CompilerHost {
                 case 'Latest'   :modTarget=TS.ScriptTarget.Latest;break;
             }
         }
-
+        if(this.project.bundle){
+            console.info(`${this.project.name}/${this.project.bundle}`);
+        }
         return <TS.CompilerOptions> {
+            jsx                     : TS.JsxEmit.React,
+            reactNamespace          : 'Reflect',
             experimentalDecorators  : true,
             emitDecoratorMetadata   : true,
             module                  : modFormat,
             target                  : modTarget,
+            stripInternal           : true,
             declaration             : true,
+            outDir                  : ".",
+            rootDir                 : ".",
             sourceMap               : true,
             inlineSources           : true,
             noLib                   : this.project.core != 'core',
-            out                     : this.project.bundle
+            outFile                 : this.project.bundle ? `${this.project.name}/${this.project.bundle}` : undefined
         }
     }
     compile(){
@@ -176,7 +185,7 @@ export class Compiler implements TS.CompilerHost {
         this.project.sourcesAll.forEach(s=>{
             this.sources[s.uri] = s;
         });
-        var sources = this.project.sourcesSelf.filter(s=>s.ts||s.tsx).map(s=>s.uri+'.ts');
+        var sources = this.project.sourcesSelf.filter(s=>s.ts||s.tsx).map(s=>s.uri+(s.tsx?'.tsx':(s.ts?'.ts':'.d.ts')));
         this.program = TS.createProgram(sources,this.options,this,this.program);
         var diagnostics:Array<TS.Diagnostic> = [];
         var result = this.program.emit();

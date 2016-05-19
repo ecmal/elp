@@ -11,10 +11,10 @@ import {Registry} from "../models/registry";
     args   : '[package]',
     usage  : [`
     Usage :
-    |  espm cache -i registry:project@version
-    |  espm cache -r registry:project@version
-    |  espm cache -l
-    |  espm cache -c
+    |  elp cache -i registry:project@version
+    |  elp cache -r registry:project@version
+    |  elp cache -l
+    |  elp cache -c
     `]
 })
 export class Cache extends Cli {

@@ -8,11 +8,11 @@ import {Project} from "../models/project";
     args   : '<package,...>',
     usage  : [`
     Usage :
-    |  espm install [options] alias=registry:project@version
+    |  elp install [options] alias=registry:project@version
     |
     Examples :
-    |  espm install -s node=github:ecmal/node@4.5.0
-    |  espm install npm:angular
+    |  elp install -s node=github:ecmal/node@4.5.0
+    |  elp install npm:angular
     `]
 })
 export class Install extends Cli {

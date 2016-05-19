@@ -9,12 +9,12 @@ import {Project} from "../models/project";
     args   : '[path]',
     usage  : [`
     Usage :
-    |  espm compile [options] [path]
+    |  elp compile [options] [path]
     |
     Examples :
-    |  espm compile
-    |  espm compile ./my-module
-    |  espm compile -o ./my/out/dir ./my-module/package.json
+    |  elp compile
+    |  elp compile ./my-module
+    |  elp compile -o ./my/out/dir ./my-module/package.json
     `]
 })
 export class Compile extends Cli {

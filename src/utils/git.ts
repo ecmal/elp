@@ -1,7 +1,8 @@
-import * as Cp from 'node/child_process';
-import * as URL from 'node/url';
 import {FileSystem} from "./fs";
 
+const Cp                = system.node.require('child_process');
+const URL               = system.node.require('url');
+const process           = system.node.process;
 const REFS:symbol       = Symbol('refs');
 const TAGS:symbol       = Symbol('tags');
 const BRANCHES:symbol   = Symbol('branches');

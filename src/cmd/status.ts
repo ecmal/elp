@@ -13,7 +13,7 @@ import {Repository} from "../utils/git";
     args   : '<package,...>',
     usage  : [`
     Usage :
-    |  espm status [options] alias=registry:project@version
+    |  elp status [options] alias=registry:project@version
     `]
 })
 export class Status extends Cli {

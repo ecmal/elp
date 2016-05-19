@@ -1,4 +1,4 @@
-import * as Crypto from "node/crypto";
+
 import FileSystem from "../utils/fs";
 const EXTS = {
     '.d.ts'     : 'definition',
@@ -7,6 +7,7 @@ const EXTS = {
     '.js'       : 'script'
 };
 
+const Crypto = system.node.require('crypto');
 export class Source {
     static isResource(ext):boolean{
         return ['.ts','.d.ts','.js','.js.map'].indexOf(ext)<0;
@@ -105,6 +106,11 @@ export class Source {
         this.project = project;
         this.name = name;
         this.files = {};
+    }
+    cleanMap(){
+        if(this.script) {
+            return this.script.replace(/\n+\/\/#\s+sourceMappingURL=(.*)\n?/g, '').trim()
+        }
     }
     bundle(maps:boolean=false){
         if(this.script){

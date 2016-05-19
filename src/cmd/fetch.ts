@@ -11,7 +11,7 @@ import {Registry} from "../models/registry";
     args   : '<package,...>',
     usage  : [`
     Usage :
-    |  espm fetch [options] alias=registry:project@version
+    |  elp fetch [options] alias=registry:project@version
     `]
 })
 export class Fetch extends Cli {

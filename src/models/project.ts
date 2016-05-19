@@ -3,14 +3,13 @@ import {Repository} from "../utils/git";
 import {Remotes} from "../utils/git";
 import {Status} from "../utils/git";
 import {Compiler} from "../compiler/compiler";
-//import {Watcher} from "../compiler/watcher";
+
 import {Source} from "./source";
 import {Registry} from "./registry";
 import {Url} from "./url";
 import {Library} from "./library";
 
 
-const crypto = require('crypto');
 const FILE:symbol = Symbol('file');
 const CONFIG:symbol = Symbol('config');
 const COMPILER:symbol = Symbol('compiler');
@@ -19,51 +18,6 @@ const SOURCES:symbol = Symbol('sources');
 const DEPS:symbol = Symbol('dependencies');
 const REPO_SOURCE:symbol = Symbol('repo.source');
 const REPO_RELEASE:symbol = Symbol('repo.release');
-
-const BUNDLE = `(function(main,scripts){
-    var evaluate;
-    if(typeof window!='undefined'){
-        evaluate = function evaluate(name,content){
-            var aMain = document.querySelector('script[main]');
-            aMain.removeAttribute('main');
-            aMain = aMain.src.split('/');
-            aMain.pop();
-            aMain =  aMain.join('/');
-            var aHead = document.querySelector('head');
-            var aScript = document.createElement('script');
-            aScript.type = 'text/javascript';
-            aScript.id = name;
-            aScript.setAttribute('main',true);
-
-            aScript.text = content+'\\n//# sourceURL='+aMain+'/'+name+'.js'
-            aHead.appendChild(aScript);
-            aScript.setAttribute('src',aMain+'/'+name+'.js');
-        }
-    }else{
-        evaluate = function evaluate(name,content){
-            var context = {
-                Buffer      : Buffer,
-                require     : require,
-                process     : process,
-                console     : console,
-                global      : global,
-                __filename  : __filename,
-                __dirname   : __dirname
-            };
-            require('vm').runInNewContext(content,context,{
-                filename : __dirname+'/'+name+'.js'
-            });
-        }
-    }
-    var runtimeName = 'runtime/package';
-    var runtimeScript = scripts[runtimeName];
-    delete scripts[runtimeName];
-    evaluate(runtimeName,runtimeScript);
-    System.bundle(scripts);
-    System.import(main).catch(function(e){
-        console.info(e.stack||e);
-    });
-})`;
 
 
 export type Sources = {[k:string]:Source};
@@ -215,9 +169,8 @@ export class Project {
         return this.config.directories;
     }
     get main():string{
-        return `${this.name}/${this.config.main||'index'}`;
+        return this.config.main?this.config.main:`${this.name}/package`;
     }
-
     constructor(path){
         this[FILE] = path;
     }
@@ -285,12 +238,15 @@ export class Project {
         this.writeSources();
         this.writePackage();
     }
-    public compile(tests:boolean=false,bundle:boolean=false,exec:boolean=false){
+    public compile(tests:boolean=false,bundle:string=null,exec:boolean=false){
+        if(bundle){
+            console.info(`Bundling${exec?' executable':''} ${bundle}`);
+        }
         tests = tests && !!this.testsDir;
         if(bundle){
             this.readFs();
             this.compileSources();
-            this.bundleSources(exec);
+            this.bundleSources(exec,bundle);
         }else{
             this.clean();
             this.readFs(tests);
@@ -560,13 +516,23 @@ export class Project {
     }
 
     private bundleSources(exec?:boolean,filename?:string){
-        var sources={};
+        var runtime=[],sources=[];
         this.sourcesAll.forEach(s=>{
-            sources[s.uri] = s.bundle(true);
+            if(s.script){
+                if(s.project=='runtime'){
+                    runtime.push(s.cleanMap());
+                }else{
+                    sources.push(s.cleanMap());
+                }
+            }
         });
-        var content = `${BUNDLE}('${this.main}',${JSON.stringify(sources,null,2)});`;
-        var file = filename||FileSystem.resolve(this.dirname,'bundle.js');
-        FileSystem.writeFile(file,(exec?'#!/usr/bin/env node\n':'')+content);
+        runtime = runtime.concat(sources);
+        runtime.push(`system.import("${this.main}");`);
+        if(exec){
+            runtime.unshift('#!/usr/bin/env node');
+        }
+        var file = FileSystem.resolve(this.dirname,filename||'bundle.js');
+        FileSystem.writeFile(file,runtime.join('\n'));
     }
     private writePackage(){
         var json = this.compilePackage();

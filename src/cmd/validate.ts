@@ -9,7 +9,7 @@ import {GitIgnore} from "../utils/gitignore";
     args   : '<package,...>',
     usage  : [`
     Usage :
-    |  espm validate [options]
+    |  elp validate [options]
     `]
 })
 export class Validate extends Cli {

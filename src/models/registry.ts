@@ -2,10 +2,10 @@ import {Url} from "./url";
 import config from '../config';
 import FileSystem from "../utils/fs";
 
-import * as URL from 'node/url';
+const URL           = system.node.require('url');
+const ID:symbol     = Symbol('id');
+const REGISTRIES    = {};
 
-const ID:symbol = Symbol('id');
-const REGISTRIES = {};
 
 export class Registry {
 
@@ -18,6 +18,7 @@ export class Registry {
         }
         return null;
     }
+
     static all():Registry[]{
         return Object.keys(REGISTRIES).map(k=>this.get(k));
     }
