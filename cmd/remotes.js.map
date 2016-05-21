@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "remotes.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "remotes.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAYA;QACI,yBAAO,GAAP;QAEA,CAAC;;;;;;;8DAXL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,eAAe;oBACxB,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,yDAGT,CAAC;iBACL,CAAC;YAAA;;QAKF,cAAC;QAJD;YAA6B,+BAAG;QAIhC,CAAC;IAAD,CAAC,AAJD,IAIC;;IAJD,iCAIC,CAAA;;;;;;;;YAJD,sBAAA,QAA6B,aAI5B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Cli} from \"./command\";\n\n\n@Command({\n    title  : 'Clone Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage  :\n    |  elp clone [options] [path]\n    `]\n})\nexport class Remotes extends Cli {\n    execute(){\n\n    }\n}"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "cli.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "cli.ts"
+  ],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;YAkBA,gBAAM,CAAC,IAAI,EAAE,CAAC,IAAI,CAAC,UAAA,MAAM;gBACrB,MAAM,CAAC,kBAAQ,CAAC,IAAI,CAAC,MAAM,CAAC,CAAC,IAAI,CAAC;oBAC9B,MAAM,CAAC,iBAAG,CAAC,KAAK,EAAC,OAAO,CAAC,CAAC;gBAC9B,CAAC,CAAC,CAAA;YACN,CAAC,CAAC,CAAC,KAAK,CAAC,UAAA,CAAC,IAAE,OAAA,OAAO,CAAC,KAAK,CAAC,CAAC,CAAC,KAAK,CAAC,EAAtB,CAAsB,CAAC,CAAC",
+  "sourcesContent": [
+    "import './cmd/init';\nimport './cmd/install';\nimport './cmd/compile';\nimport './cmd/publish';\nimport './cmd/validate';\nimport './cmd/status';\nimport './cmd/show';\nimport './cmd/fetch';\nimport './cmd/cache';\nimport './cmd/clone';\nimport './cmd/remotes';\nimport './cmd/bundle';\nimport './cmd/run';\n\nimport cli from './cmd/command';\nimport config from './config';\nimport services from './services';\n\nconfig.load().then(config=>{\n    return services.load(config).then(()=>{\n        return cli('elp','0.0.9');\n    })\n}).catch(e=>console.error(e.stack));\n\n\n"
+  ]
+}

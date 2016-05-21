@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "bundle.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "bundle.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAoBA;QAeI,wBAAO,GAAP,UAAQ,IAAoB;YAApB,oBAAoB,GAApB,OAAY,IAAI,CAAC,GAAG;YACxB,iBAAO,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC,OAAO,CAAC,KAAK,EAAC,IAAI,CAAC,IAAI,IAAE,WAAW,EAAC,CAAC,CAAC,IAAI,CAAC,UAAU,CAAC,CAAC;QAC/E,CAAC;;;;;kDAfD;gBAAA,CAAC,gBAAM,CAAC;oBACJ,KAAK,EAAM,GAAG;oBACd,IAAI,EAAO,MAAM;oBACjB,KAAK,EAAM,kBAAkB;iBAChC,CAAC;YAAA;yDAGF;gBAAA,CAAC,gBAAM,CAAC;oBACJ,KAAK,EAAM,GAAG;oBACd,KAAK,EAAM,kBAAkB;iBAChC,CAAC;YAAA;;;;;8DAzBN;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,iBAAiB;oBAC1B,IAAI,EAAK,QAAQ;oBACjB,KAAK,EAAI,CAAC,kMAQT,CAAC;iBACL,CAAC;YAAA;;QAoBF,aAAC;QAnBD;YAA4B,+BAAG;QAmB/B,CAAC;IAAD,CAAC,AAnBD,IAmBC;;IAnBD,+BAmBC,CAAA;;;;;;;;;;;;;;;;;;YAnBD,qBAAA,OAA4B,aAmB3B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\nimport {FileSystem} from \"../utils/fs\";\nimport {Compiler} from \"../compiler/compiler\";\nimport {Project} from \"../models/project\";\n\n@Command({\n    title  : 'Compile Project',\n    args   : '[path]',\n    usage  : [`\n    Usage :\n    |  elp compile [options] [path]\n    |\n    Examples :\n    |  elp compile\n    |  elp compile ./my-module\n    |  elp compile -o ./my/out/dir ./my-module/package.json\n    `]\n})\nexport class Bundle extends Cli {\n\n    @Option({\n        alias    : 'f',\n        args     : 'file',\n        title    : 'Output directory'\n    })\n    file:string;\n\n    @Option({\n        alias    : 'e',\n        title    : 'Output directory'\n    })\n    executable:boolean;\n\n    execute(path:string=this.cwd){\n        Project.read(path).compile(false,this.file||'bundle.js',!!this.executable);\n    }\n\n}"
+  ]
+}

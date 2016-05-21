@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "publish.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "publish.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAmBA;QAQI,yBAAO,GAAP,UAAQ,IAAoB;YAApB,oBAAoB,GAApB,OAAY,IAAI,CAAC,GAAG;YACxB,iBAAO,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC,OAAO,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC;QAC3C,CAAC;;;;;oDARD;gBAAA,CAAC,gBAAM,CAAC;oBACJ,KAAK,EAAM,GAAG;oBACd,KAAK,EAAM,kBAAkB;iBAChC,CAAC;YAAA;;;;;8DAjBN;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,iBAAiB;oBAC1B,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,6LAOT,CAAC;iBACL,CAAC;YAAA;;QAYF,cAAC;QAXD;YAA6B,+BAAG;QAWhC,CAAC;IAAD,CAAC,AAXD,IAWC;;IAXD,iCAWC,CAAA;;;;;;;;;;;;YAXD,sBAAA,QAA6B,aAW5B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\n\nimport {Project} from \"../models/project\";\n\n\n@Command({\n    title  : 'Install Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage :\n    |  elp publish [options] alias=registry:project@version\n    |\n    Examples :\n    |  elp install -s node=github:ecmal/node@4.5.0\n    |  elp install npm:angular\n    `]\n})\nexport class Publish extends Cli {\n\n    @Option({\n        alias    : 'f',\n        title    : 'Force to publish'\n    })\n    force:boolean;\n\n    execute(path:string=this.cwd){\n        Project.read(path).publish(this.force);\n    }\n}"
+  ]
+}

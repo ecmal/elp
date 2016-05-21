@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "init.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "init.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAcA;QASI,sBAAO,GAAP;YAAQ,kBAAW;iBAAX,WAAW,CAAX,sBAAW,CAAX,IAAW;gBAAX,iCAAW;;YACf,OAAO,CAAC,IAAI,CAAC,IAAI,CAAC,IAAI,EAAC,QAAQ,CAAC,CAAC;QACrC,CAAC;;;;;kDATD;gBAAA,CAAC,gBAAM,CAAC;oBACJ,KAAK,EAAM,GAAG;oBACd,IAAI,EAAO,MAAM;oBACjB,KAAK,EAAM,0BAA0B;iBACxC,CAAC;YAAA;;;;;8DAhBN;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,oBAAoB;oBAC7B,KAAK,EAAI,CAAC,kGAMT,CAAC;iBACL,CAAC;YAAA;;QAaF,WAAC;QAZD;YAA0B,+BAAG;QAY7B,CAAC;IAAD,CAAC,AAZD,IAYC;;IAZD,2BAYC,CAAA;;;;;;;;;YAZD,mBAAA,KAA0B,aAYzB",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\n\n@Command({\n    title  : 'Initialize Package',\n    usage  : [`\n    Usage :\n    |  elp init [options]\n    |\n    Examples :\n    |  elp init -n my-app\n    `]\n})\nexport class Init extends Cli {\n\n    @Option({\n        alias    : 'n',\n        args     : 'name',\n        title    : 'Save to package config ?'\n    })\n    name:string;\n\n    execute(...packages){\n        console.info(this.name,packages);\n    }\n}"
+  ]
+}

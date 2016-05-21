@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "show.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "show.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAgBA;QAEI,sBAAO,GAAP,UAAQ,GAAU;YACd,EAAE,CAAA,CAAC,SAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC,CAAA,CAAC;gBACjB,OAAO,CAAC,IAAI,CAAC,iBAAO,CAAC,IAAI,CAAC,GAAG,CAAC,CAAC,CAAC;YACpC,CAAC;QACL,CAAC;;;;;;;;;;8DAdL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,cAAc;oBACvB,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,+EAGT,CAAC;iBACL,CAAC;YAAA;;QAQF,WAAC;QAPD;YAA0B,+BAAG;QAO7B,CAAC;IAAD,CAAC,AAPD,IAOC;;IAPD,2BAOC,CAAA;;;;;;;;;;;;;;;;;;YAPD,mBAAA,KAA0B,aAOzB",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\nimport {Library} from \"../models/library\";\nimport {Url} from \"../models/url\";\nimport {Registry} from \"../models/registry\";\n\n\n@Command({\n    title  : 'Show Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage :\n    |  elp show [options] alias=registry:project@version\n    `]\n})\nexport class Show extends Cli {\n    private url:Url;\n    execute(url:string){\n        if(Url.isValid(url)){\n            console.info(Library.show(url));\n        }\n    }\n}"
+  ]
+}

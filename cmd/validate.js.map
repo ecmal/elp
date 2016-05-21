@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "validate.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "validate.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAcA;QACI,0BAAO,GAAP,UAAQ,IAAoB;YAApB,oBAAoB,GAApB,OAAY,IAAI,CAAC,GAAG;YACxB,IAAI,UAAU,GAAG,eAAU,CAAC,OAAO,CAAC,IAAI,EAAC,YAAY,CAAC,CAAC;YACvD,EAAE,CAAA,CAAC,eAAU,CAAC,MAAM,CAAC,UAAU,CAAC,CAAC,CAAA,CAAC;gBAC9B,IAAI,EAAE,GAAG,IAAI,qBAAS,CAAC,eAAU,CAAC,QAAQ,CAAC,UAAU,CAAC,CAAC,QAAQ,EAAE,CAAC,CAAC;gBACnE,OAAO,CAAC,IAAI,CAAC,EAAE,CAAC,MAAM,CAAC,KAAK,CAAC,CAAC,CAAA;YAClC,CAAC;QACL,CAAC;;;;;;;;;8DAfL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,kBAAkB;oBAC3B,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,oDAGT,CAAC;iBACL,CAAC;YAAA;;QASF,eAAC;QARD;YAA8B,+BAAG;QAQjC,CAAC;IAAD,CAAC,AARD,IAQC;;IARD,mCAQC,CAAA;;;;;;;;;;;;;;YARD,uBAAA,SAA8B,aAQ7B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Cli} from \"./command\";\n\nimport {FileSystem} from \"../utils/fs\";\nimport {GitIgnore} from \"../utils/gitignore\";\n\n@Command({\n    title  : 'Validate Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage :\n    |  elp validate [options]\n    `]\n})\nexport class Validate extends Cli {\n    execute(path:string=this.cwd){\n        var ignoreFile = FileSystem.resolve(path,'.gitignore');\n        if(FileSystem.isFile(ignoreFile)){\n            var gi = new GitIgnore(FileSystem.readFile(ignoreFile).toString());\n            console.info(gi.denies('out'))\n        }\n    }\n}"
+  ]
+}
