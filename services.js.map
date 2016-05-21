@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "services.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "services.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAEA;QACI,uBAAI,GAAJ,UAAK,MAAa;YACd,MAAM,CAAC,OAAO,CAAC,OAAO,CAAC,IAAI,CAAC,CAAC;QACjC,CAAC;QACL,eAAC;QAJD;QAIA,CAAC;IAAD,CAAC,AAJD,IAIC;;IAJD,mCAIC,CAAA;;;;;;;YAJD,uBAAA,QAIC;YACD,wBAAe,IAAI,QAAQ,EAAE,EAAA",
+  "sourcesContent": [
+    "import {Config} from \"./config\";\n\nexport class Services {\n    load(config:Config):Promise<Services>{\n        return Promise.resolve(this);\n    }\n}\nexport default new Services()"
+  ]
+}

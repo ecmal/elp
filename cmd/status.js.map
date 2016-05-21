@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "status.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "status.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAkBA;QACI,wBAAO,GAAP,UAAQ,IAAoB;YAApB,oBAAoB,GAApB,OAAY,IAAI,CAAC,GAAG;YACxB,IAAI,IAAI,GAAG,iBAAO,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC;YAC9B,IAAI,IAAI,GAAG,IAAI,gBAAU,CAAC,IAAI,CAAC,OAAO,CAAC,CAAC;YACxC,4BAA4B;YAC5B,8BAA8B;YAC9B,+BAA+B;YAC/B,IAAI,IAAI,GAAG,IAAI,CAAC,IAAI,EAAE,CAAC;YACvB,OAAO,CAAC,IAAI,CAAC,IAAI,CAAC,CAAA;YAClB;;;;;;;;;;;;;gCAaoB;QACxB,CAAC;;;;;;;;;8DA/BL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,gBAAgB;oBACzB,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,iFAGT,CAAC;iBACL,CAAC;YAAA;;QAyBF,aAAC;QAxBD;YAA4B,+BAAG;QAwB/B,CAAC;IAAD,CAAC,AAxBD,IAwBC;;IAxBD,+BAwBC,CAAA;;;;;;;;;;;;;;;;;;;;;;;;YAxBD,qBAAA,OAA4B,aAwB3B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\n\nimport {FileSystem} from \"../utils/fs\";\nimport {Compiler} from \"../compiler/compiler\";\nimport {Package} from \"../models/package\";\nimport {Registry} from \"../models/registry\";\nimport {Repository} from \"../utils/git\";\n\n@Command({\n    title  : 'Status Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage :\n    |  elp status [options] alias=registry:project@version\n    `]\n})\nexport class Status extends Cli {\n    execute(path:string=this.cwd){\n        var pack = Package.read(path);\n        var repo = new Repository(pack.dirname);\n        //var regs = Registry.all();\n        //var status  = repo.status();\n        //var remotes = repo.remotes();\n        var refs = repo.refs();\n        console.info(refs)\n        /*var log = repo.log();\n        var regs = Object.keys(remotes).map(k=>{\n            for(var r of regs){\n                if(r.matches(remotes[k].url)){\n                    remotes[k].registry = r.id;\n                    return r;\n                }\n            }\n        });\n        console.info(regs);\n        console.info(refs);\n        console.info(status);\n        console.info(remotes);\n        console.info(log);*/\n    }\n}\n\n"
+  ]
+}

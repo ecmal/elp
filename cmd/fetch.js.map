@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "fetch.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "fetch.ts"
+  ],
+  "names": [],
+  "mappings": ";;IAgBA;QAEI,uBAAO,GAAP,UAAQ,GAAU;YACd,EAAE,CAAA,CAAC,SAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC,CAAA,CAAC;gBACjB,iBAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC,OAAO,EAAE,CAAC;YAC/B,CAAC;QACL,CAAC;;;;;;;;;;8DAdL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,eAAe;oBACxB,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,gFAGT,CAAC;iBACL,CAAC;YAAA;;QAQF,YAAC;QAPD;YAA2B,+BAAG;QAO9B,CAAC;IAAD,CAAC,AAPD,IAOC;;IAPD,6BAOC,CAAA;;;;;;;;;;;;;;;;;;YAPD,oBAAA,MAA2B,aAO1B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Option} from './command';\nimport {Cli} from \"./command\";\nimport {Library} from \"../models/library\";\nimport {Url} from \"../models/url\";\nimport {Registry} from \"../models/registry\";\n\n\n@Command({\n    title  : 'Fetch Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage :\n    |  elp fetch [options] alias=registry:project@version\n    `]\n})\nexport class Fetch extends Cli {\n    private url:Url;\n    execute(url:string){\n        if(Url.isValid(url)){\n            Library.get(url).install();\n        }\n    }\n}"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "clone.js",
+  "sourceRoot": "/Users/Sergey/Work/GH/ecmal/elp/src",
+  "sources": [
+    "clone.ts"
+  ],
+  "names": [],
+  "mappings": ";;QAMM,OAAO;IAUb;QACI,uBAAO,GAAP,UAAQ,GAAU,EAAC,IAAY;YAC3B,EAAE,CAAA,CAAC,SAAG,CAAC,OAAO,CAAC,GAAG,CAAC,CAAC,CAAA,CAAC;gBACjB,IAAI,CAAC;oBACD,IAAI,IAAI,GAAG,iBAAO,CAAC,IAAI,CAAC,GAAG,CAAC,CAAC;oBAC7B,EAAE,CAAA,CAAC,IAAI,CAAC,CAAA,CAAC;wBACL,IAAI,GAAG,GAAG,YAAU,CAAC,OAAO,CAAC,OAAO,CAAC,GAAG,EAAE,EAAC,IAAI,IAAE,IAAI,CAAC,IAAI,CAAC,CAAC;wBAC5D,IAAI,GAAG,GAAG,iBAAO,CAAC,GAAG,CAAC,GAAG,CAAC,CAAC;wBAC3B,EAAE,CAAA,CAAC,CAAC,IAAI,CAAC,KAAK,CAAC,CAAA,CAAC;4BACZ,GAAG,CAAC,OAAO,CAAC,IAAI,CAAC,CAAC;wBACtB,CAAC;wBACD,GAAG,CAAC,OAAO,CAAC,GAAG,EAAC,IAAI,CAAC,MAAM,CAAC,IAAI,EAAI,IAAI,CAAC,QAAQ,SAAI,IAAI,CAAC,MAAM,CAAC,IAAM,CAAC,CAAA;oBAC5E,CAAC;gBACL,CAAC;gBAAA,KAAK,CAAA,CAAC,EAAE,CAAC,CAAA,CAAC;oBACP,OAAO,CAAC,IAAI,CAAC,EAAE,CAAC,KAAK,CAAC,CAAA;gBAC1B,CAAC;YACL,CAAC;QACL,CAAC;;;;;;;;;;8DAzBL;gBAAA,CAAC,iBAAO,CAAC;oBACL,KAAK,EAAI,eAAe;oBACxB,IAAI,EAAK,eAAe;oBACxB,KAAK,EAAI,CAAC,yDAGT,CAAC;iBACL,CAAC;YAAA;;QAmBF,YAAC;QAlBD;YAA2B,+BAAG;QAkB9B,CAAC;IAAD,CAAC,AAlBD,IAkBC;;IAlBD,6BAkBC,CAAA;;;;;;;;;;;;;;;;;YA5BK,OAAO,GAAG,MAAM,CAAC,IAAI,CAAC,OAAO,CAAC;YAUpC,oBAAA,MAA2B,aAkB1B",
+  "sourcesContent": [
+    "import {Command} from './command';\nimport {Cli} from \"./command\";\nimport {Library} from \"../models/library\";\nimport {Url} from \"../models/url\";\nimport FileSystem from \"../utils/fs\";\n\nconst process = system.node.process;\n\n@Command({\n    title  : 'Clone Package',\n    args   : '<package,...>',\n    usage  : [`\n    Usage  :\n    |  elp clone [options] [path]\n    `]\n})\nexport class Clone extends Cli {\n    execute(url:string,path?:string){\n        if(Url.isValid(url)){\n            try {\n                var show = Library.show(url);\n                if(show){\n                    var dir = FileSystem.resolve(process.cwd(),path||show.name);\n                    var lib = Library.get(url);\n                    if(!show.exist){\n                        lib.install(true);\n                    }\n                    lib.workdir(dir,show.source.name,`${show.registry}/${show.source.name}`)\n                }\n            }catch(ex){\n                console.info(ex.stack)\n            }\n        }\n    }\n}"
+  ]
+}
