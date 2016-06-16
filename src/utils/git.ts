@@ -22,63 +22,6 @@ export abstract class Entity {
     abstract parse(data:string):any;
 }
 
-export class Remote extends Entity {
-
-    protected [REFS]:{[key:string]:string};
-    protected [BRANCHES]:string[];
-    protected [TAGS]:string[];
-
-    public get refs():{[key:string]:string}{
-        return this[REFS];
-    }
-    public get branches():string[]{
-        var list = this[BRANCHES];
-        if(!list){
-            list = this[BRANCHES]=[];
-            for(var ref in this.refs){
-                var arr = ref.match(/^refs\/heads\/(.*)$/);
-                if(arr){
-                    list.push(arr[1]);
-                }
-            }
-        }
-        return list;
-    }
-    public get tags():string[]{
-        var list = this[TAGS];
-        if(!list){
-            list = this[TAGS]=[];
-            for(var ref in this.refs){
-                var arr = ref.match(/^refs\/tags\/(.*)$/);
-                if(arr){
-                    list.push(arr[1]);
-                }
-            }
-        }
-        return list;
-    }
-    hasTag(name){
-        return this.tags.indexOf(name)>=0;
-    }
-    hasBranch(name){
-        return this.branches.indexOf(name)>=0;
-    }
-    inspect(){
-        return {
-            refs     : this.refs,
-            branches : this.branches,
-            tags     : this.tags
-        }
-    }
-    parse(data:string):Remote {
-        var refs = this[REFS] = {};
-        data.trim().split('\n').forEach(l=>{
-            var r = l.trim().split(/\s+/);
-            refs[r[1]]=r[0];
-        });
-        return this;
-    }
-}
 
 
 export class Status {
@@ -355,14 +298,7 @@ export class Repository {
         });
         return mp;
     }
-    getRemote(remote:string,pattern?:string){
-        var result = this.exec('ls-remote','--tags','--heads',remote,pattern);
-        if(result.output){
-            return new Remote(this).parse(result.output);
-        }else{
-            throw new Error(`Invalid remote "${remote}" ${result.output}`)
-        }
-    }
+
 
     hasRemote(name):boolean {
         return !!this.remotes()[name];

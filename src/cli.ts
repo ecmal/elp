@@ -17,8 +17,10 @@ import config from './config';
 import services from './services';
 
 config.load().then(config=>{
+    const path = system.node.require('path');
+    const info = system.node.require(path.resolve(path.dirname(module.url),'package.json'));
     return services.load(config).then(()=>{
-        return cli('elp','0.0.9');
+        return cli(info.name,info.version);
     })
 }).catch(e=>console.error(e.stack));
 

@@ -249,527 +249,8 @@ system.register("runtime/reflect/declaration", ["runtime/events"], function(syst
         }
     }
 });
-system.register("runtime/reflect/class", ["runtime/reflect/declaration", "runtime/decorators"], function(system,module) {
-    var declaration_1, decorators_1;
-    module.define("interface","ClassMap");
-    var Type = (function (__super) {
-        Type.get = function (reference) {
-            var params = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                params[_i - 1] = arguments[_i];
-            }
-            if (reference instanceof Type) {
-                return reference;
-            }
-            else {
-                return new Type(reference, params);
-            }
-        };
-        return Type;
-        function Type(value, params) {
-            if (typeof value == 'string') {
-                Object.defineProperty(this, 'module', {
-                    enumerable: true,
-                    configurable: true,
-                    writable: false,
-                    value: value
-                });
-                Object.defineProperty(this, 'interface', {
-                    enumerable: true,
-                    configurable: true,
-                    writable: false,
-                    value: params[0]
-                });
-            }
-            else {
-                Object.defineProperty(this, 'reference', {
-                    enumerable: true,
-                    configurable: true,
-                    writable: false,
-                    value: value
-                });
-                Object.defineProperty(this, 'parameters', {
-                    enumerable: true,
-                    configurable: true,
-                    writable: false,
-                    value: params
-                });
-            }
-        }
-    })();
-    module.define('class', Type);
-    module.export("Type", Type);
-    var Modifier = (function (__super) {
-        Modifier.has = function (a, b) {
-            return (a & b) == b;
-        };
-        Modifier.__initializer = function(__parent){
-            __super=__parent;
-            Modifier.NONE = 0;
-            Modifier.STATIC = 1;
-            Modifier.PUBLIC = 2;
-            Modifier.PROTECTED = 4;
-            Modifier.PRIVATE = 8;
-            Modifier.DECORATED = 16;
-            Modifier.ABSTRACT = 32;
-            Modifier.EXPORT = 64;
-            Modifier.DEFAULT = 128;
-        };
-        return Modifier;
-        function Modifier() {
-        }
-    })();
-    module.define('class', Modifier);
-    module.export("Modifier", Modifier);
-    var Parameter = (function (__super) {
-        Parameter.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Parameter;
-        function Parameter(owner, name, flags, type) {
-            __super.call(this, name);
-            Object.defineProperty(this, 'owner', {
-                enumerable: true,
-                writable: false,
-                configurable: false,
-                value: owner
-            });
-            Object.defineProperty(this, 'flags', {
-                enumerable: true,
-                writable: false,
-                configurable: false,
-                value: flags
-            });
-            Object.defineProperty(this, 'type', {
-                enumerable: true,
-                writable: false,
-                configurable: false,
-                value: type
-            });
-        }
-    })();
-    module.define('class', Parameter);
-    module.export("Parameter", Parameter);
-    var Member = (function (__super) {
-        Object.defineProperty(Member.prototype, "descriptor", {
-            get: function () {
-                return Object.getOwnPropertyDescriptor(this.scope, this.name);
-            },
-            set: function (v) {
-                var old = this.descriptor;
-                var changed = false;
-                for (var i in v) {
-                    if (old[i] !== v[i]) {
-                        changed = true;
-                    }
-                }
-                if (changed) {
-                    //console.info("CHANGED",this.toString());
-                    Object.defineProperty(this.scope, this.name, v);
-                }
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Member.prototype, "isStatic", {
-            get: function () {
-                return Modifier.has(this.flags, Modifier.STATIC);
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Member.prototype, "isPublic", {
-            get: function () {
-                return Modifier.has(this.flags, Modifier.PUBLIC);
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Member.prototype, "scope", {
-            get: function () {
-                return this.isStatic ? this.owner.value : this.owner.value.prototype;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Member.prototype.decorate = function (decorators) {
-            var _this = this;
-            if (!this.decorators) {
-                Object.defineProperty(this, 'decorators', {
-                    enumerable: true,
-                    configurable: true,
-                    writable: false,
-                    value: []
-                });
-            }
-            decorators.forEach(function (d) {
-                _this.decorators.push(d);
-                d.decorate(_this);
-            });
-        };
-        Member.prototype.toString = function () {
-            return "Member(" + this.owner.name + (this.isStatic ? '.' : ':') + this.name + ")";
-        };
-        Member.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Member;
-        function Member(owner, name, flags, descriptor) {
-            __super.call(this, name);
-            if (this.constructor == Member) {
-                throw new Error('Member is abstract class');
-            }
-            Object.defineProperty(this, 'owner', {
-                enumerable: true,
-                value: owner
-            });
-            Object.defineProperty(this, 'flags', {
-                enumerable: true,
-                configurable: true,
-                value: flags
-            });
-            Object.defineProperty(this, 'id', {
-                enumerable: true,
-                value: "" + this.owner.id + (this.isStatic ? '.' : ':') + this.name
-            });
-            if (!this.original) {
-                Object.defineProperty(this, 'original', {
-                    enumerable: true,
-                    value: this.descriptor || descriptor
-                });
-            }
-            if (descriptor) {
-                this.descriptor = descriptor;
-            }
-        }
-    })();
-    module.define('class', Member);
-    module.export("Member", Member);
-    var Property = (function (__super) {
-        Property.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Property;
-        function Property() {
-            __super.apply(this, arguments);
-        }
-    })();
-    module.define('class', Property);
-    module.export("Property", Property);
-    var Method = (function (__super) {
-        Method.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Method;
-        function Method() {
-            __super.apply(this, arguments);
-        }
-    })();
-    module.define('class', Method);
-    module.export("Method", Method);
-    var Constructor = (function (__super) {
-        Constructor.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Constructor;
-        function Constructor() {
-            __super.apply(this, arguments);
-        }
-    })();
-    module.define('class', Constructor);
-    module.export("Constructor", Constructor);
-    var Class = (function (__super) {
-        Class.extend = function (d, b) {
-            if (b) {
-                Object.setPrototypeOf(d, b);
-                Object.setPrototypeOf(d.prototype, b.prototype);
-            }
-            Object.defineProperty(d.prototype, 'constructor', {
-                configurable: true,
-                value: d
-            });
-        };
-        Class.isClass = function (target) {
-            return target.class instanceof Class;
-        };
-        Object.defineProperty(Class, "map", {
-            get: function () {
-                return Object.defineProperty(this, 'map', {
-                    value: Object.create(null)
-                });
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Class.prototype.getMember = function (name, flags, descriptor) {
-            if (flags === void 0) { flags = 0; }
-            if (descriptor === void 0) { descriptor = false; }
-            var isStatic = Modifier.has(flags, Modifier.STATIC);
-            var key = "" + (isStatic ? '.' : ':') + name;
-            var member = this.members[key];
-            if (!member) {
-                var scope = isStatic ? this.value : this.value.prototype;
-                if (!!descriptor) {
-                    var desc;
-                    if (typeof descriptor == 'object') {
-                        Object.defineProperty(scope, name, desc = descriptor);
-                    }
-                    else if (descriptor) {
-                        desc = Object.getOwnPropertyDescriptor(scope, name);
-                    }
-                    if (!desc) {
-                        return;
-                    }
-                    if (isStatic) {
-                        if (name != 'arguments' && name != 'caller' && name != 'prototype') {
-                            if (typeof desc.value == 'function') {
-                                member = new Method(this, name, flags, desc);
-                            }
-                            else {
-                                member = new Property(this, name, flags, desc);
-                            }
-                        }
-                    }
-                    else {
-                        if (typeof desc.value == 'function') {
-                            if (name == 'constructor') {
-                                member = new Constructor(this, name, flags, desc);
-                            }
-                            else {
-                                member = new Method(this, name, flags, desc);
-                            }
-                        }
-                        else {
-                            member = new Property(this, name, flags, desc);
-                        }
-                    }
-                    Object.defineProperty(this.members, key, {
-                        enumerable: true,
-                        value: member
-                    });
-                }
-            }
-            return member;
-        };
-        /**
-         * @internal
-         */
-        Class.prototype.decorate = function (type, name, flags, designType, returnType, decorators, parameters, interfaces) {
-            var _this = this;
-            var name = name || "constructor";
-            var decorateMember = function (member, type, params) {
-                var decorator = type;
-                if (typeof type == "function") {
-                    decorator = new (type.bind.apply(type, [void 0].concat(params)))();
-                }
-                if (typeof decorator == 'function') {
-                    if (member instanceof Constructor) {
-                        var value = decorator(_this.value);
-                        if (typeof value == 'function' && value !== _this.value) {
-                            Object.defineProperty(_this, 'value', {
-                                configurable: true,
-                                value: value
-                            });
-                        }
-                    }
-                    else {
-                        var old = member.descriptor;
-                        var value = decorator(member.scope, member.name, old);
-                        if (typeof value == 'object' && (old.configurable != value.configurable ||
-                            old.enumerable != value.enumerable ||
-                            old.writable != value.writable ||
-                            old.value != value.value ||
-                            old.get != value.get ||
-                            old.set != value.set)) {
-                            member.descriptor = value;
-                        }
-                    }
-                }
-                else if (decorator instanceof decorators_1.Decorator) {
-                    if (member instanceof Constructor) {
-                        var value = decorator.decorate(member);
-                        if (typeof value == 'function' && value !== _this.value) {
-                            Object.defineProperty(_this, 'value', {
-                                configurable: true,
-                                value: value
-                            });
-                        }
-                    }
-                    else {
-                        var old = member.descriptor;
-                        var value = decorator.decorate(member);
-                        if (typeof value == 'object' && (old.configurable != value.configurable ||
-                            old.enumerable != value.enumerable ||
-                            old.writable != value.writable ||
-                            old.value != value.value ||
-                            old.get != value.get ||
-                            old.set != value.set)) {
-                            member.descriptor = value;
-                        }
-                    }
-                }
-                else {
-                    console.info(decorator);
-                }
-                return decorator;
-            };
-            var member = this.getMember(name, flags);
-            if (!member) {
-                member = this.getMember(name, flags, {
-                    enumerable: true,
-                    writable: true,
-                    configurable: true,
-                    value: null
-                });
-            }
-            Object.defineProperty(member, 'type', {
-                enumerable: true,
-                writable: true,
-                configurable: true,
-                value: Type.get(designType)
-            });
-            if (member instanceof Method) {
-                if (member instanceof Constructor) {
-                    Object.defineProperty(member, 'returns', {
-                        enumerable: true,
-                        writable: true,
-                        configurable: true,
-                        value: Type.get(this.value)
-                    });
-                    if (interfaces && interfaces.length) {
-                        Object.defineProperty(member, 'interfaces', {
-                            enumerable: true,
-                            writable: true,
-                            configurable: true,
-                            value: interfaces.map(function (i) { return Type.get(i); })
-                        });
-                    }
-                }
-                else {
-                    Object.defineProperty(member, 'returns', {
-                        enumerable: true,
-                        writable: true,
-                        configurable: true,
-                        value: Type.get(returnType)
-                    });
-                }
-                if (parameters && parameters.length) {
-                    Object.defineProperty(member, 'parameters', {
-                        enumerable: true,
-                        writable: true,
-                        configurable: true,
-                        value: parameters.map(function (p) {
-                            var decorators = p[3];
-                            var parameter = new Parameter(member, p[0], p[1], Type.get(p[2]));
-                            if (decorators && decorators.length) {
-                                Object.defineProperty(parameter, 'decorators', {
-                                    enumerable: true,
-                                    writable: true,
-                                    configurable: true,
-                                    value: decorators
-                                        .map(function (d) { return decorateMember(member, d.shift(), d); })
-                                        .filter(function (d) { return (d instanceof decorators_1.Decorator); })
-                                });
-                            }
-                            return parameter;
-                        })
-                    });
-                }
-            }
-            if (decorators && decorators.length) {
-                Object.defineProperty(member, 'decorators', {
-                    enumerable: true,
-                    writable: true,
-                    configurable: true,
-                    value: decorators
-                        .map(function (d) { return decorateMember(member, d.shift(), d); })
-                        .filter(function (d) { return (d instanceof decorators_1.Decorator); })
-                });
-            }
-            return this.value;
-        };
-        Class.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Class;
-        function Class(module, name, value) {
-            var _this = this;
-            __super.call(this, name);
-            Object.defineProperty(this, 'module', {
-                enumerable: true,
-                value: module
-            });
-            Object.defineProperty(this, 'original', {
-                value: value
-            });
-            Object.defineProperty(this, 'value', {
-                configurable: true,
-                value: value
-            });
-            Object.defineProperty(this, 'members', {
-                value: Object.create(null)
-            });
-            Object.defineProperty(this, 'id', {
-                enumerable: true,
-                value: this.module.name + "#" + this.name
-            });
-            Object.defineProperty(Class.map, this.id, {
-                enumerable: true,
-                value: this
-            });
-            //delete this.value.name;
-            //delete this.value.length;
-            Object.getOwnPropertyNames(this.value).forEach(function (name) {
-                if (name != 'arguments' && name != 'caller' && name != 'prototype' && name != '__decorator' && name != '__initializer') {
-                    _this.getMember(name, Modifier.PUBLIC | Modifier.STATIC, true);
-                }
-            });
-            Object.getOwnPropertyNames(this.value.prototype).forEach(function (name) {
-                _this.getMember(name, Modifier.PUBLIC, true);
-            });
-            function getParents(target) {
-                function getParent(target) {
-                    if (target.__proto__) {
-                        return target.__proto__.constructor;
-                    }
-                    else {
-                        return null;
-                    }
-                }
-                var parent = target, parents = [];
-                while (parent && parent.prototype) {
-                    if (parent = getParent(parent.prototype)) {
-                        parents.push(parent);
-                    }
-                }
-                return parents;
-            }
-        }
-    })();
-    module.define('class', Class);
-    module.export("Class", Class);
-    return {
-        setters:[
-            function (declaration_1_1) {
-                declaration_1 = declaration_1_1;
-            },
-            function (decorators_1_1) {
-                decorators_1 = decorators_1_1;
-            }],
-        execute: function() {
-            Type = module.init(Type);
-            Modifier = module.init(Modifier);
-            Parameter = module.init(Parameter,declaration_1.Declaration);
-            Member = module.init(Member,declaration_1.Declaration);
-            Property = module.init(Property,Member);
-            Method = module.init(Method,Member);
-            Constructor = module.init(Constructor,Method);
-            Class = module.init(Class,declaration_1.Declaration);
-        }
-    }
-});
-system.register("runtime/decorators", ["runtime/reflect/class"], function(system,module) {
-    var class_1;
+system.register("runtime/decorators", ["runtime/reflect/declaration"], function(system,module) {
+    var declaration_1;
     var Decorator = (function (__super) {
         Decorator.prototype.decorate = function (target) { };
         return Decorator;
@@ -806,8 +287,8 @@ system.register("runtime/decorators", ["runtime/reflect/class"], function(system
     module.export("Metadata", Metadata);
     return {
         setters:[
-            function (class_1_1) {
-                class_1 = class_1_1;
+            function (declaration_1_1) {
+                declaration_1 = declaration_1_1;
             }],
         execute: function() {
             Decorator = module.init(Decorator);
@@ -895,10 +376,555 @@ system.register("runtime/helpers", [], function(system,module) {
         }
     }
 });
+system.register("runtime/reflect/class", ["runtime/reflect/declaration", "runtime/decorators"], function(system,module) {
+    var declaration_2, decorators_1;
+    var ClassMap = module.define("interface","ClassMap");
+    var Interface = (function (__super) {
+        Interface.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Interface;
+        function Interface(module, name) {
+            __super.call(this, name);
+            Object.defineProperty(this, 'module', {
+                enumerable: true,
+                value: module
+            });
+            Object.defineProperty(this, 'id', {
+                enumerable: true,
+                value: this.module.name + "#" + this.name
+            });
+            Object.defineProperty(this, 'implementations', {
+                enumerable: true,
+                value: []
+            });
+            Object.defineProperty(system.classes, this.id, {
+                enumerable: true,
+                value: this
+            });
+        }
+    })();
+    module.define('class', Interface);
+    module.export("Interface", Interface);
+    var Type = (function (__super) {
+        Type.get = function (reference) {
+            var params = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                params[_i - 1] = arguments[_i];
+            }
+            if (reference instanceof Type) {
+                return reference;
+            }
+            else {
+                return new Type(reference, params);
+            }
+        };
+        return Type;
+        function Type(value, params) {
+            Object.defineProperty(this, 'reference', {
+                enumerable: true,
+                configurable: true,
+                get: function () {
+                    if (value instanceof Function) {
+                        return value.class;
+                    }
+                    else {
+                        return value;
+                    }
+                }
+            });
+            Object.defineProperty(this, 'parameters', {
+                enumerable: true,
+                configurable: true,
+                writable: false,
+                value: params
+            });
+        }
+    })();
+    module.define('class', Type);
+    module.export("Type", Type);
+    var Modifier = (function (__super) {
+        Modifier.has = function (a, b) {
+            return (a & b) == b;
+        };
+        Modifier.__initializer = function(__parent){
+            __super=__parent;
+            Modifier.NONE = 0;
+            Modifier.STATIC = 1;
+            Modifier.PUBLIC = 2;
+            Modifier.PROTECTED = 4;
+            Modifier.PRIVATE = 8;
+            Modifier.DECORATED = 16;
+            Modifier.ABSTRACT = 32;
+            Modifier.EXPORT = 64;
+            Modifier.DEFAULT = 128;
+        };
+        return Modifier;
+        function Modifier() {
+        }
+    })();
+    module.define('class', Modifier);
+    module.export("Modifier", Modifier);
+    var Parameter = (function (__super) {
+        Parameter.prototype.toString = function () {
+            return this.constructor.name + "(" + this.id + ")";
+        };
+        Parameter.prototype.inspect = function () {
+            return this.toString();
+        };
+        Parameter.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Parameter;
+        function Parameter(owner, name, index, flags, type) {
+            __super.call(this, name);
+            Object.defineProperty(this, 'owner', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: owner
+            });
+            Object.defineProperty(this, 'index', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: index
+            });
+            Object.defineProperty(this, 'id', {
+                enumerable: true,
+                value: this.owner.id + ":" + this.index + "." + this.name
+            });
+            Object.defineProperty(this, 'flags', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: flags
+            });
+            Object.defineProperty(this, 'type', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: type
+            });
+        }
+    })();
+    module.define('class', Parameter);
+    module.export("Parameter", Parameter);
+    var Member = (function (__super) {
+        Object.defineProperty(Member.prototype, "descriptor", {
+            get: function () {
+                return Object.getOwnPropertyDescriptor(this.scope, this.name);
+            },
+            set: function (v) {
+                var old = this.descriptor;
+                var changed = false;
+                for (var i in v) {
+                    if (old[i] !== v[i]) {
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    //console.info("CHANGED",this.toString());
+                    Object.defineProperty(this.scope, this.name, v);
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Member.prototype, "isStatic", {
+            get: function () {
+                return Modifier.has(this.flags, Modifier.STATIC);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Member.prototype, "isPublic", {
+            get: function () {
+                return Modifier.has(this.flags, Modifier.PUBLIC);
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Object.defineProperty(Member.prototype, "scope", {
+            get: function () {
+                return this.isStatic ? this.owner.value : this.owner.value.prototype;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        Member.prototype.decorate = function (decorators) {
+            var _this = this;
+            if (!this.decorators) {
+                Object.defineProperty(this, 'decorators', {
+                    enumerable: true,
+                    configurable: true,
+                    writable: false,
+                    value: []
+                });
+            }
+            decorators.forEach(function (d) {
+                _this.decorators.push(d);
+                d.decorate(_this);
+            });
+        };
+        Member.prototype.toString = function () {
+            return this.constructor.name + "(" + this.owner.name + (this.isStatic ? '.' : ':') + this.name + ")";
+        };
+        Member.prototype.inspect = function () {
+            return this.toString();
+        };
+        Member.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Member;
+        function Member(owner, name, flags, descriptor) {
+            __super.call(this, name);
+            if (this.constructor == Member) {
+                throw new Error('Member is abstract class');
+            }
+            Object.defineProperty(this, 'owner', {
+                enumerable: true,
+                value: owner
+            });
+            Object.defineProperty(this, 'flags', {
+                enumerable: true,
+                configurable: true,
+                value: flags
+            });
+            Object.defineProperty(this, 'id', {
+                enumerable: true,
+                value: "" + this.owner.id + (this.isStatic ? '.' : ':') + this.name
+            });
+            if (!this.original) {
+                Object.defineProperty(this, 'original', {
+                    enumerable: true,
+                    value: this.descriptor || descriptor
+                });
+            }
+            if (descriptor) {
+                this.descriptor = descriptor;
+            }
+        }
+    })();
+    module.define('class', Member);
+    module.export("Member", Member);
+    var Property = (function (__super) {
+        Property.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Property;
+        function Property() {
+            __super.apply(this, arguments);
+        }
+    })();
+    module.define('class', Property);
+    module.export("Property", Property);
+    var Method = (function (__super) {
+        Method.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Method;
+        function Method() {
+            __super.apply(this, arguments);
+        }
+    })();
+    module.define('class', Method);
+    module.export("Method", Method);
+    var Constructor = (function (__super) {
+        Constructor.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Constructor;
+        function Constructor() {
+            __super.apply(this, arguments);
+        }
+    })();
+    module.define('class', Constructor);
+    module.export("Constructor", Constructor);
+    var Class = (function (__super) {
+        Class.extend = function (d, b) {
+            if (b) {
+                Object.setPrototypeOf(d, b);
+                Object.setPrototypeOf(d.prototype, b.prototype);
+            }
+            Object.defineProperty(d.prototype, 'constructor', {
+                configurable: true,
+                value: d
+            });
+        };
+        Class.isClass = function (target) {
+            return target.class instanceof Class;
+        };
+        Class.prototype.getMember = function (name, flags, descriptor) {
+            if (flags === void 0) { flags = 0; }
+            if (descriptor === void 0) { descriptor = false; }
+            var isStatic = Modifier.has(flags, Modifier.STATIC);
+            var key = "" + (isStatic ? '.' : ':') + name;
+            var member = this.members[key];
+            if (!member) {
+                var scope = isStatic ? this.value : this.value.prototype;
+                if (!!descriptor) {
+                    var desc;
+                    if (typeof descriptor == 'object') {
+                        Object.defineProperty(scope, name, desc = descriptor);
+                    }
+                    else if (descriptor) {
+                        desc = Object.getOwnPropertyDescriptor(scope, name);
+                    }
+                    if (!desc) {
+                        return;
+                    }
+                    if (isStatic) {
+                        if (name != 'arguments' && name != 'caller' && name != 'prototype') {
+                            if (typeof desc.value == 'function') {
+                                member = new Method(this, name, flags, desc);
+                            }
+                            else {
+                                member = new Property(this, name, flags, desc);
+                            }
+                        }
+                    }
+                    else {
+                        if (typeof desc.value == 'function') {
+                            if (name == 'constructor') {
+                                member = new Constructor(this, name, flags, desc);
+                            }
+                            else {
+                                member = new Method(this, name, flags, desc);
+                            }
+                        }
+                        else {
+                            member = new Property(this, name, flags, desc);
+                        }
+                    }
+                    Object.defineProperty(this.members, key, {
+                        enumerable: true,
+                        value: member
+                    });
+                }
+            }
+            return member;
+        };
+        /**
+         * @internal
+         */
+        Class.prototype.decorate = function (type, name, flags, designType, returnType, decorators, parameters, interfaces) {
+            var _this = this;
+            var name = name || "constructor";
+            var decorateMember = function (member, type, params) {
+                var decorator = type;
+                if (typeof type == "function") {
+                    decorator = new (type.bind.apply(type, [void 0].concat(params)))();
+                }
+                if (typeof decorator == 'function') {
+                    if (member instanceof Constructor) {
+                        var value = decorator(_this.value);
+                        if (typeof value == 'function' && value !== _this.value) {
+                            Object.defineProperty(_this, 'value', {
+                                configurable: true,
+                                value: value
+                            });
+                        }
+                    }
+                    else if (member instanceof Member) {
+                        var old = member.descriptor;
+                        var value = decorator(member.scope, member.name, old);
+                        if (typeof value == 'object' && (old.configurable != value.configurable ||
+                            old.enumerable != value.enumerable ||
+                            old.writable != value.writable ||
+                            old.value != value.value ||
+                            old.get != value.get ||
+                            old.set != value.set)) {
+                            member.descriptor = value;
+                        }
+                    }
+                    else if (member instanceof Parameter) {
+                        decorator(member.owner.scope, member.owner.name, member.index);
+                    }
+                }
+                else if (decorator instanceof decorators_1.Decorator) {
+                    if (member instanceof Constructor) {
+                        var value = decorator.decorate(member);
+                        if (typeof value == 'function' && value !== _this.value) {
+                            Object.defineProperty(_this, 'value', {
+                                configurable: true,
+                                value: value
+                            });
+                        }
+                    }
+                    else if (member instanceof Member) {
+                        var old = member.descriptor;
+                        var value = decorator.decorate(member);
+                        if (typeof value == 'object' && (old.configurable != value.configurable ||
+                            old.enumerable != value.enumerable ||
+                            old.writable != value.writable ||
+                            old.value != value.value ||
+                            old.get != value.get ||
+                            old.set != value.set)) {
+                            member.descriptor = value;
+                        }
+                    }
+                    else {
+                        decorator.decorate(member);
+                    }
+                }
+                else {
+                    console.info(decorator);
+                }
+                return decorator;
+            };
+            var member = this.getMember(name, flags);
+            if (!member) {
+                member = this.getMember(name, flags, {
+                    enumerable: true,
+                    writable: true,
+                    configurable: true,
+                    value: null
+                });
+            }
+            Object.defineProperty(member, 'type', {
+                enumerable: true,
+                writable: true,
+                configurable: true,
+                value: Type.get(designType)
+            });
+            if (member instanceof Method) {
+                if (parameters && parameters.length) {
+                    Object.defineProperty(member, 'parameters', {
+                        enumerable: true,
+                        writable: true,
+                        configurable: true,
+                        value: parameters.map(function (p, i) {
+                            var decorators = p[3];
+                            var parameter = new Parameter(member, p[0], i, p[1], Type.get(p[2]));
+                            if (decorators && decorators.length) {
+                                Object.defineProperty(parameter, 'decorators', {
+                                    enumerable: true,
+                                    writable: true,
+                                    configurable: true,
+                                    value: decorators
+                                        .map(function (d) { return decorateMember(parameter, d.shift(), d); })
+                                        .filter(function (d) { return (d instanceof decorators_1.Decorator); })
+                                });
+                            }
+                            return parameter;
+                        })
+                    });
+                }
+                if (member instanceof Constructor) {
+                    Object.defineProperty(member, 'returns', {
+                        enumerable: true,
+                        writable: true,
+                        configurable: true,
+                        value: Type.get(this.value)
+                    });
+                    if (interfaces && interfaces.length) {
+                        Object.defineProperty(this, 'interfaces', {
+                            enumerable: true,
+                            writable: true,
+                            configurable: true,
+                            value: interfaces.map(function (i) { return Type.get(i); })
+                        });
+                    }
+                }
+                else {
+                    Object.defineProperty(member, 'returns', {
+                        enumerable: true,
+                        writable: true,
+                        configurable: true,
+                        value: Type.get(returnType)
+                    });
+                }
+            }
+            if (decorators && decorators.length) {
+                Object.defineProperty(member, 'decorators', {
+                    enumerable: true,
+                    writable: true,
+                    configurable: true,
+                    value: decorators
+                        .map(function (d) { return decorateMember(member, d.shift(), d); })
+                        .filter(function (d) { return (d instanceof decorators_1.Decorator); })
+                });
+            }
+            return this.value;
+        };
+        Class.prototype.toString = function () {
+            return "Class(" + this.id + ")";
+        };
+        Class.__initializer = function(__parent){
+            __super=__parent;
+        };
+        return Class;
+        function Class(module, name, value) {
+            var _this = this;
+            __super.call(this, module, name);
+            Object.defineProperty(this, 'original', {
+                value: value
+            });
+            Object.defineProperty(this, 'value', {
+                configurable: true,
+                value: value
+            });
+            Object.defineProperty(this, 'members', {
+                enumerable: true,
+                value: Object.create(null)
+            });
+            //delete this.value.name;
+            //delete this.value.length;
+            Object.getOwnPropertyNames(this.value).forEach(function (name) {
+                if (name != 'arguments' && name != 'caller' && name != 'prototype' && name != '__decorator' && name != '__initializer') {
+                    _this.getMember(name, Modifier.PUBLIC | Modifier.STATIC, true);
+                }
+            });
+            Object.getOwnPropertyNames(this.value.prototype).forEach(function (name) {
+                _this.getMember(name, Modifier.PUBLIC, true);
+            });
+            function getParents(target) {
+                function getParent(target) {
+                    if (target.__proto__) {
+                        return target.__proto__.constructor;
+                    }
+                    else {
+                        return null;
+                    }
+                }
+                var parent = target, parents = [];
+                while (parent && parent.prototype) {
+                    if (parent = getParent(parent.prototype)) {
+                        parents.push(parent);
+                    }
+                }
+                return parents;
+            }
+        }
+    })();
+    module.define('class', Class);
+    module.export("Class", Class);
+    return {
+        setters:[
+            function (declaration_2_1) {
+                declaration_2 = declaration_2_1;
+            },
+            function (decorators_1_1) {
+                decorators_1 = decorators_1_1;
+            }],
+        execute: function() {
+            Interface = module.init(Interface,declaration_2.Declaration);
+            Type = module.init(Type);
+            Modifier = module.init(Modifier);
+            Parameter = module.init(Parameter,declaration_2.Declaration);
+            Member = module.init(Member,declaration_2.Declaration);
+            Property = module.init(Property,Member);
+            Method = module.init(Method,Member);
+            Constructor = module.init(Constructor,Method);
+            Class = module.init(Class,Interface);
+        }
+    }
+});
 system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], function(system,module) {
-    var class_2, class_3, helpers_1;
+    var class_1, class_2, class_3, helpers_1;
     var REFLECT;
-    module.define("interface","ModuleMap");
+    var ModuleMap = module.define("interface","ModuleMap");
     var Module = (function (__super) {
         /**
          * @internal
@@ -921,7 +947,7 @@ system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], 
          * @internal
          */
         Module.extend = function (a, b) {
-            return class_2.Class.extend(a, b);
+            return class_1.Class.extend(a, b);
         };
         /**
          * @internal
@@ -939,7 +965,7 @@ system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], 
                     this.members[value.constructor.name] = value;
                     break;
                 case 'interface':
-                    this.members[value] = class_3.Type.get(this.name, value);
+                    this.members[value] = new class_2.Interface(this, value);
                     this.exports[value] = this.members[value];
                     break;
             }
@@ -966,10 +992,10 @@ system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], 
                 var Child, Parent;
                 Object.defineProperty(_this.members, target.name, {
                     value: Object.defineProperty(target, 'class', {
-                        value: Child = target[REFLECT] = new class_2.Class(_this, target.name, target)
+                        value: Child = target[REFLECT] = new class_1.Class(_this, target.name, target)
                     }).class
                 });
-                class_2.Class.extend(target, parent);
+                class_1.Class.extend(target, parent);
                 if (target.__initializer) {
                     target.__initializer(parent);
                     delete target.__initializer;
@@ -1030,7 +1056,14 @@ system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], 
                         }
                     });
                 }
-                definer.execute();
+                try {
+                    definer.execute();
+                }
+                catch (ex) {
+                    var error = new Error("module \"" + this.name + "\" execution error");
+                    error.stack += "\ncause : \n" + ex.stack;
+                    throw error;
+                }
             }
         };
         return Module;
@@ -1050,9 +1083,10 @@ system.register("runtime/module", ["runtime/reflect/class", "runtime/helpers"], 
     module.export("Module", Module);
     return {
         setters:[
-            function (class_2_1) {
-                class_2 = class_2_1;
-                class_3 = class_2_1;
+            function (class_1_1) {
+                class_1 = class_1_1;
+                class_2 = class_1_1;
+                class_3 = class_1_1;
             },
             function (helpers_1_1) {
                 helpers_1 = helpers_1_1;
@@ -1384,10 +1418,19 @@ system.register("runtime/loader", ["runtime/loaders/base", "runtime/loaders/node
 });
 system.register("runtime/system", ["runtime/events", "runtime/module", "runtime/loader", "runtime/reflect/class"], function(system,module) {
     var events_2, module_2, loader_1, loader_2, loader_3, class_4;
-    module.define("interface","Globals");
-    module.define("interface","NodeGlobals");
-    module.define("interface","BrowserGlobals");
+    var Globals = module.define("interface","Globals");
+    var NodeGlobals = module.define("interface","NodeGlobals");
+    var BrowserGlobals = module.define("interface","BrowserGlobals");
     var System = (function (__super) {
+        Object.defineProperty(System.prototype, "classes", {
+            get: function () {
+                return Object.defineProperty(this, 'classes', {
+                    value: Object.create(null)
+                }).classes;
+            },
+            enumerable: true,
+            configurable: true
+        });
         System.prototype.import = function (name) {
             return this.loader.import(name);
         };
@@ -1459,9 +1502,9 @@ system.register("runtime/system", ["runtime/events", "runtime/module", "runtime/
             }
             for (var n in this.modules) {
                 var m = this.modules[n];
-                for (var i in m.members) {
-                    if (i.indexOf('runtime/') == 0) {
-                        m.execute();
+                if (m.name.indexOf('runtime/') == 0) {
+                    for (var i in m.members) {
+                        m.init(m.members[i], null);
                     }
                 }
                 if (!m.url) {
@@ -1481,10 +1524,6 @@ system.register("runtime/system", ["runtime/events", "runtime/module", "runtime/
                     });
                 }
             }
-            Object.defineProperty(this, 'classes', {
-                enumerable: true,
-                value: class_4.Class.map
-            });
             this.emit('init');
             if (this.promises && this.promises.length) {
                 var promise;
@@ -1547,8 +1586,10 @@ system.register("elp/cli", ['./cmd/init', './cmd/install', './cmd/compile', './c
             }],
         execute: function() {
             config_1.default.load().then(function (config) {
+                var path = system.node.require('path');
+                var info = system.node.require(path.resolve(path.dirname(module.url), 'package.json'));
                 return services_1.default.load(config).then(function () {
-                    return command_1.default('elp', '0.0.9');
+                    return command_1.default(info.name, info.version);
                 });
             }).catch(function (e) { return console.error(e.stack); });
         }
@@ -1688,7 +1729,9 @@ system.register("elp/cmd/bundle", ['./command', "../utils/fs", "../compiler/comp
                     args: '[path]',
                     usage: ["\n    Usage :\n    |  elp compile [options] [path]\n    |\n    Examples :\n    |  elp compile\n    |  elp compile ./my-module\n    |  elp compile -o ./my/out/dir ./my-module/package.json\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Bundle;
         function Bundle() {
@@ -1779,7 +1822,9 @@ system.register("elp/cmd/cache", ['./command', "../models/library", "../models/u
                     args: '[package]',
                     usage: ["\n    Usage :\n    |  elp cache -i registry:project@version\n    |  elp cache -r registry:project@version\n    |  elp cache -l\n    |  elp cache -c\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Cache;
         function Cache() {
@@ -1846,7 +1891,9 @@ system.register("elp/cmd/clone", ['./command', "../models/library", "../models/u
                     args: '<package,...>',
                     usage: ["\n    Usage  :\n    |  elp clone [options] [path]\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_2.Cli
+            ],null);
         };
         return Clone;
         function Clone() {
@@ -2006,7 +2053,7 @@ system.register("elp/cmd/command", [], function(system,module) {
             Cli = 
             __decorate(217, "constructor", null, null, null, [
                 [Command]
-            ], null,null);
+            ], null,null,null);
         };
         return Cli;
         function Cli() {
@@ -2153,7 +2200,9 @@ system.register("elp/cmd/compile", ['./command', "../models/project"], function(
                     args: '[path]',
                     usage: ["\n    Usage :\n    |  elp compile [options] [path]\n    |\n    Examples :\n    |  elp compile\n    |  elp compile ./my-module\n    |  elp compile -o ./my/out/dir ./my-module/package.json\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Compile;
         function Compile() {
@@ -2210,7 +2259,9 @@ system.register("elp/cmd/config", ['./command'], function(system,module) {
                     title: 'Initialize Package',
                     usage: ["\n    Usage :\n    |  elp init [options]\n    |\n    Examples :\n    |  elp init -n my-app\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Init;
         function Init() {
@@ -2254,7 +2305,9 @@ system.register("elp/cmd/fetch", ['./command', "../models/library", "../models/u
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp fetch [options] alias=registry:project@version\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Fetch;
         function Fetch() {
@@ -2314,7 +2367,9 @@ system.register("elp/cmd/init", ['./command'], function(system,module) {
                     title: 'Initialize Package',
                     usage: ["\n    Usage :\n    |  elp init [options]\n    |\n    Examples :\n    |  elp init -n my-app\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Init;
         function Init() {
@@ -2371,7 +2426,9 @@ system.register("elp/cmd/install", ['./command', "../models/project"], function(
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp install [options] alias=registry:project@version\n    |\n    Examples :\n    |  elp install -s node=github:ecmal/node@4.5.0\n    |  elp install npm:angular\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Install;
         function Install() {
@@ -2422,7 +2479,9 @@ system.register("elp/cmd/publish", ['./command', "../models/project"], function(
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp publish [options] alias=registry:project@version\n    |\n    Examples :\n    |  elp install -s node=github:ecmal/node@4.5.0\n    |  elp install npm:angular\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Publish;
         function Publish() {
@@ -2463,7 +2522,9 @@ system.register("elp/cmd/remotes", ['./command'], function(system,module) {
                     args: '<package,...>',
                     usage: ["\n    Usage  :\n    |  elp clone [options] [path]\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_2.Cli
+            ],null);
         };
         return Remotes;
         function Remotes() {
@@ -2618,7 +2679,9 @@ system.register("elp/cmd/run", ['./command', "../models/project", "../utils/fs"]
                     args: '[path]',
                     usage: ["\n    Usage :\n    |  elp compile [options] [path]\n    |\n    Examples :\n    |  elp compile\n    |  elp compile ./my-module\n    |  elp compile -o ./my/out/dir ./my-module/package.json\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Run;
         function Run() {
@@ -2674,7 +2737,9 @@ system.register("elp/cmd/show", ['./command', "../models/library", "../models/ur
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp show [options] alias=registry:project@version\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Show;
         function Show() {
@@ -2745,7 +2810,9 @@ system.register("elp/cmd/status", ['./command', "../utils/fs", "../compiler/comp
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp status [options] alias=registry:project@version\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_3.Cli
+            ],null);
         };
         return Status;
         function Status() {
@@ -2806,7 +2873,9 @@ system.register("elp/cmd/validate", ['./command', "../utils/fs", "../utils/gitig
                     args: '<package,...>',
                     usage: ["\n    Usage :\n    |  elp validate [options]\n    "]
                 }]
-            ], null,null);
+            ], null,[
+                command_2.Cli
+            ],null);
         };
         return Validate;
         function Validate() {
@@ -4864,79 +4933,6 @@ system.register("elp/utils/git", ["./fs"], function(system,module) {
     })();
     module.define('class', Entity);
     module.export("Entity", Entity);
-    var Remote = (function (__super) {
-        Object.defineProperty(Remote.prototype, "refs", {
-            get: function () {
-                return this[REFS];
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Remote.prototype, "branches", {
-            get: function () {
-                var list = this[BRANCHES];
-                if (!list) {
-                    list = this[BRANCHES] = [];
-                    for (var ref in this.refs) {
-                        var arr = ref.match(/^refs\/heads\/(.*)$/);
-                        if (arr) {
-                            list.push(arr[1]);
-                        }
-                    }
-                }
-                return list;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Object.defineProperty(Remote.prototype, "tags", {
-            get: function () {
-                var list = this[TAGS];
-                if (!list) {
-                    list = this[TAGS] = [];
-                    for (var ref in this.refs) {
-                        var arr = ref.match(/^refs\/tags\/(.*)$/);
-                        if (arr) {
-                            list.push(arr[1]);
-                        }
-                    }
-                }
-                return list;
-            },
-            enumerable: true,
-            configurable: true
-        });
-        Remote.prototype.hasTag = function (name) {
-            return this.tags.indexOf(name) >= 0;
-        };
-        Remote.prototype.hasBranch = function (name) {
-            return this.branches.indexOf(name) >= 0;
-        };
-        Remote.prototype.inspect = function () {
-            return {
-                refs: this.refs,
-                branches: this.branches,
-                tags: this.tags
-            };
-        };
-        Remote.prototype.parse = function (data) {
-            var refs = this[REFS] = {};
-            data.trim().split('\n').forEach(function (l) {
-                var r = l.trim().split(/\s+/);
-                refs[r[1]] = r[0];
-            });
-            return this;
-        };
-        Remote.__initializer = function(__parent){
-            __super=__parent;
-        };
-        return Remote;
-        function Remote() {
-            __super.apply(this, arguments);
-        }
-    })();
-    module.define('class', Remote);
-    module.export("Remote", Remote);
     var Status = (function (__super) {
         return Status;
         function Status(status) {
@@ -5218,15 +5214,6 @@ system.register("elp/utils/git", ["./fs"], function(system,module) {
             });
             return mp;
         };
-        Repository.prototype.getRemote = function (remote, pattern) {
-            var result = this.exec('ls-remote', '--tags', '--heads', remote, pattern);
-            if (result.output) {
-                return new Remote(this).parse(result.output);
-            }
-            else {
-                throw new Error("Invalid remote \"" + remote + "\" " + result.output);
-            }
-        };
         Repository.prototype.hasRemote = function (name) {
             return !!this.remotes()[name];
         };
@@ -5449,7 +5436,6 @@ system.register("elp/utils/git", ["./fs"], function(system,module) {
             BRANCHES = Symbol('branches');
             REPO = Symbol('repo');
             Entity = module.init(Entity);
-            Remote = module.init(Remote,Entity);
             Status = module.init(Status);
             Repository = module.init(Repository);
         }
@@ -42719,6 +42705,7 @@ system.register("compiler/index", [], function(system,module) {
                       write('null');
                   }
                   var impls = [];
+                  var extds = [];
                   if (node.heritageClauses && node.heritageClauses.length) {
                       node.heritageClauses.forEach(function (h) {
                           if (h.token == 106 /* ImplementsKeyword */ && h.types && h.types.length) {
@@ -42726,7 +42713,42 @@ system.register("compiler/index", [], function(system,module) {
                                   impls.push(e);
                               });
                           }
+                          else if (h.token == 83 /* ExtendsKeyword */ && h.types && h.types.length) {
+                              h.types.forEach(function (e) {
+                                  extds.push(e);
+                              });
+                          }
                       });
+                  }
+                  write(',');
+                  if (extds.length) {
+                      write('[');
+                      writeLine();
+                      increaseIndent();
+                      extds.forEach(function (symbol, index) {
+                          if (index > 0) {
+                              write(',');
+                              writeLine();
+                          }
+                          if (symbol.typeArguments && symbol.typeArguments.length) {
+                              write('__type(');
+                              emit(symbol.expression);
+                              symbol.typeArguments.forEach(function (t) {
+                                  write(',');
+                                  emitSerializedTypeNode(t);
+                              });
+                              write(')');
+                          }
+                          else {
+                              emit(symbol.expression);
+                          }
+                      });
+                      decreaseIndent();
+                      writeLine();
+                      write(']');
+                  }
+                  else {
+                      write('null');
                   }
                   write(',');
                   if (impls.length) {
@@ -60712,7 +60734,7 @@ system.register("compiler/index", [], function(system,module) {
   /* @internal */
   var toolsVersion = "1.8";
   /* tslint:enable:no-unused-variable */ 
-  //# sourceMappingURL=file:////Users/Sergey/Work/GH/ecmal/compiler/typescript/built/local/typescriptServices.js.map
+  //# sourceMappingURL=file:////Users/Sergey/Work/BB/ecmal/compiler/typescript/built/local/typescriptServices.js.map
   module.export("TypeScript", ts);
   module.export("default",ts);
   return {setters:[],execute:function(){}}
