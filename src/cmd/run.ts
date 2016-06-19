@@ -10,7 +10,7 @@ const CP = system.node.require('child_process');
 
 const RUN_SCRIPT = `
 require('./runtime/package');
-System.import('§MAIN§').catch(function(e){
+system.import('§MAIN§').catch(function(e){
     console.error(e.stack);
     process.exit(1);
 });

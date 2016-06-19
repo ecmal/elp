@@ -50,7 +50,7 @@ export class Compiler implements TS.CompilerHost {
             source = this.project.sources[name] = new Source(this.project.name,name,true);
         }
 
-        if(ext=='.js.map'){
+        /*if(ext=='.js.map'){
             try {
                 var map = JSON.parse(data);
                 map.sourceRoot = source.dirname||this.project.sourceDir;
@@ -73,7 +73,7 @@ export class Compiler implements TS.CompilerHost {
                 console.info(fileName,ext);
                 console.info(data);
             }
-        }
+        }*/
 
 
         source.addFile({
@@ -165,7 +165,7 @@ export class Compiler implements TS.CompilerHost {
         }
         return <TS.CompilerOptions> {
             jsx                     : TS.JsxEmit.React,
-            reactNamespace          : 'Reflect',
+            reactNamespace          : 'system',
             experimentalDecorators  : true,
             emitDecoratorMetadata   : true,
             module                  : modFormat,

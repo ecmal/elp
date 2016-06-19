@@ -10,7 +10,7 @@ const EXTS = {
 const Crypto = system.node.require('crypto');
 export class Source {
     static isResource(ext):boolean{
-        return ['.ts','.d.ts','.js','.js.map'].indexOf(ext)<0;
+        return ['.ts','.tsx','.d.ts','.js','.js.map'].indexOf(ext)<0;
     }
     static getHash(content){
         return Crypto.createHash('md5').update(content).digest("hex");
