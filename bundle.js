@@ -2709,7 +2709,7 @@ system.register("elp/cmd/run", ['./command', "../models/project", "../utils/fs"]
         execute: function() {
             process = system.node.process;
             CP = system.node.require('child_process');
-            RUN_SCRIPT = "\nrequire('./runtime/package');\nSystem.import('\u00A7MAIN\u00A7').catch(function(e){\n    console.error(e.stack);\n    process.exit(1);\n});\n";
+            RUN_SCRIPT = "\nrequire('./runtime/package');\nsystem.import('\u00A7MAIN\u00A7').catch(function(e){\n    console.error(e.stack);\n    process.exit(1);\n});\n";
             Run = module.init(Run,command_3.Cli);
         }
     }
@@ -2941,7 +2941,6 @@ system.register("elp/compiler/compiler", ["../models/project", "../models/source
             return "$.d.ts";
         };
         Compiler.prototype.writeFile = function (fileName, data, writeByteOrderMark, onError) {
-            var _this = this;
             fileName = fileName.replace('./', '');
             if (fileName.indexOf(this.project.name + '/') == 0) {
                 fileName = fileName.replace(this.project.name + '/', '');
@@ -2952,32 +2951,30 @@ system.register("elp/compiler/compiler", ["../models/project", "../models/source
             if (!source) {
                 source = this.project.sources[name] = new source_1.Source(this.project.name, name, true);
             }
-            if (ext == '.js.map') {
+            /*if(ext=='.js.map'){
                 try {
                     var map = JSON.parse(data);
-                    map.sourceRoot = source.dirname || this.project.sourceDir;
+                    map.sourceRoot = source.dirname||this.project.sourceDir;
                     //delete map.sourceRoot;
-                    if (map.sources.length > 0) {
-                        map.sources = map.sources.map(function (n) {
-                            var name = source_1.Source.getName(n);
-                            var ext = source_1.Source.getExt(n);
-                            var src = _this.sources[name];
-                            if (src) {
+                    if(map.sources.length>0) {
+                        map.sources = map.sources.map(n=> {
+                            var name = Source.getName(n);
+                            var ext = Source.getExt(n);
+                            var src = this.sources[name];
+                            if(src) {
                                 return src.name + ext;
-                            }
-                            else {
+                            }else{
                                 return n;
                             }
                         });
                     }
                     data = JSON.stringify(map, null, 2);
-                }
-                catch (e) {
+                }catch(e){
                     console.info(e.stack);
-                    console.info(fileName, ext);
+                    console.info(fileName,ext);
                     console.info(data);
                 }
-            }
+            }*/
             source.addFile({
                 name: name,
                 ext: ext,
@@ -3085,7 +3082,7 @@ system.register("elp/compiler/compiler", ["../models/project", "../models/source
                 }
                 return {
                     jsx: index_1.default.JsxEmit.React,
-                    reactNamespace: 'Reflect',
+                    reactNamespace: 'system',
                     experimentalDecorators: true,
                     emitDecoratorMetadata: true,
                     module: modFormat,
@@ -4435,7 +4432,7 @@ system.register("elp/models/source", ["../utils/fs"], function(system,module) {
     var EXTS, Crypto;
     var Source = (function (__super) {
         Source.isResource = function (ext) {
-            return ['.ts', '.d.ts', '.js', '.js.map'].indexOf(ext) < 0;
+            return ['.ts', '.tsx', '.d.ts', '.js', '.js.map'].indexOf(ext) < 0;
         };
         Source.getHash = function (content) {
             return Crypto.createHash('md5').update(content).digest("hex");
@@ -38710,12 +38707,12 @@ system.register("compiler/index", [], function(system,module) {
                   }
                   function emitJsxElement(openingNode, children) {
                       var syntheticReactRef = ts.createSynthesizedNode(69 /* Identifier */);
-                      syntheticReactRef.text = compilerOptions.reactNamespace ? compilerOptions.reactNamespace : "React";
+                      syntheticReactRef.text = "jsx";
                       syntheticReactRef.parent = openingNode;
                       // Call React.createElement(tag, ...
                       emitLeadingComments(openingNode);
                       emitExpressionIdentifier(syntheticReactRef);
-                      write(".createElement(");
+                      write(".$(");
                       emitTagName(openingNode.tagName);
                       write(", ");
                       // Attribute list
@@ -38728,7 +38725,7 @@ system.register("compiler/index", [], function(system,module) {
                           // a call to the __assign helper
                           var attrs = openingNode.attributes;
                           if (ts.forEach(attrs, function (attr) { return attr.kind === 242 /* JsxSpreadAttribute */; })) {
-                              write("__.assign(");
+                              write("jsx._(");
                               var haveOpenedObjectLiteral = false;
                               for (var i = 0; i < attrs.length; i++) {
                                   if (attrs[i].kind === 242 /* JsxSpreadAttribute */) {
@@ -38778,7 +38775,14 @@ system.register("compiler/index", [], function(system,module) {
                       }
                       // Children
                       if (children) {
+                          if (children.length > 1) {
+                              writeLine();
+                              increaseIndent();
+                          }
                           for (var i = 0; i < children.length; i++) {
+                              if (i > 0) {
+                                  writeLine();
+                              }
                               // Don't emit empty expressions
                               if (children[i].kind === 243 /* JsxExpression */ && !(children[i].expression)) {
                                   continue;
@@ -38796,6 +38800,10 @@ system.register("compiler/index", [], function(system,module) {
                                   write(", ");
                                   emit(children[i]);
                               }
+                          }
+                          if (children.length > 1) {
+                              decreaseIndent();
+                              writeLine();
                           }
                       }
                       // Closing paren
@@ -42242,7 +42250,7 @@ system.register("compiler/index", [], function(system,module) {
                           writeLine();
                           emitStart(baseTypeElement);
                           if (languageVersion < 2 /* ES6 */) {
-                              write("__super.apply(this, arguments);");
+                              write("return __super.apply(this, arguments);");
                           }
                           else {
                               write("super(...args);");
@@ -42646,6 +42654,20 @@ system.register("compiler/index", [], function(system,module) {
                       emitDeclarationName(node);
                       write(".__decorator = function(__decorate,__type){");
                       increaseIndent();
+                      if (node.typeParameters) {
+                          writeLine();
+                          write('var ');
+                          node.typeParameters.forEach(function (tp, i) {
+                              if (i > 0) {
+                                  write(', ');
+                              }
+                              write(tp.name.text);
+                              write(' = __type("');
+                              write(tp.name.text);
+                              write('")');
+                          });
+                          write(';');
+                      }
                       emitDecoratorsOfMembers(node, 0 /* None */);
                       emitDecoratorsOfMembers(node, 64 /* Static */);
                       emitDecoratorsOfConstructor(node, decoratedClassAlias);
@@ -42775,6 +42797,20 @@ system.register("compiler/index", [], function(system,module) {
                       });
                       decreaseIndent();
                       writeLine();
+                      write(']');
+                  }
+                  else {
+                      write('null');
+                  }
+                  write(',');
+                  if (node.typeParameters) {
+                      write('[');
+                      node.typeParameters.forEach(function (tp, i) {
+                          if (i > 0) {
+                              write(', ');
+                          }
+                          write(tp.name.text);
+                      });
                       write(']');
                   }
                   else {
@@ -44457,7 +44493,11 @@ system.register("compiler/index", [], function(system,module) {
                       }
                       write(text);
                   }
-                  write("], function(system,module) {");
+                  write("], function(system,module");
+                  if (compilerOptions.jsx) {
+                      write(",jsx");
+                  }
+                  write(") {");
                   writeLine();
                   increaseIndent();
                   var startIndex = emitDirectivePrologues(node.statements, /*startWithNewLine*/ true, /*ensureUseStrict*/ !compilerOptions.noImplicitUseStrict);
