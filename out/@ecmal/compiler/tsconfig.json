@@ -1,0 +1,16 @@
+{
+    "name": "@ecmal/compiler",
+    "compilerOptions": {
+        "module": "system",
+        "target": "es5",
+        "declaration": true,
+        "sourceMap": true,
+        "outDir": "../../out",
+        "noEmitHelpers": true,
+        "importHelpers": true,
+        "stripInternal": true,
+        "baseUrl": "../../out",
+        "typeRoots": ["../../out"],
+        "types": ["@ecmal/runtime"]
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "elp",
+  "version": "2.5.0-elp",
+  "description": "Ecmal Project",
+  "main": "index.js",
+  "license": "ISC",
+  "scripts": {
+    "patch":"ts-node --fast tools/patch.ts",
+    "compile-runtime":"node ./lib/tsc.js -p ./src/runtime",
+    "compile-core":"node ./lib/tsc.js -p ./src/core",
+    "compile-compiler":"node ./lib/tsc.js -p ./src/compiler"
+  }
+}
