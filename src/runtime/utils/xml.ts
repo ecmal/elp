@@ -1,4 +1,4 @@
-import { Buffer } from "@ecmal/node/buffer";
+declare const Buffer;
 
 const CS = {
     BS      : 32,
@@ -354,7 +354,7 @@ export class XmlNode {
 }
 export class XmlBuffer {
 
-    public buffer :Buffer;
+    public buffer :any;
     public pos :any;
 
     constructor() {

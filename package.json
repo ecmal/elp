@@ -6,15 +6,20 @@
     "license": "ISC",
     "scripts": {
         "start": "node ./test/project.js",
-        "patch": "ts-node --fast tools/patch.ts",
+        "typescript": "ts-node --fast tools/patch.ts",
+        "react": "ts-node --fast tools/react.ts",
         "compile":"node ./lib/tsc.js",
-        "project-compile": "npm run compile -- -p ./src/project",
-        "project-watch": "npm run runtime:compile -- -w",
-        "runtime-compile": "npm run compile -- -p ./src/runtime",
-        "runtime-watch": "npm run runtime:compile -- -w",
-        "http-compile": "npm run compile -- -p ./src/http",
-        "http-watch": "npm run runtime:compile -- -w",
-        "node-compile": "npm run compile -- -p ./src/node",
-        "node-watch": "npm run runtime:compile -- -w"
+        "compile-runtime": "npm run compile -- -p ./src/runtime",
+        "compile-node": "npm run compile -- -p ./src/node",
+        "compile-http": "npm run compile -- -p ./src/http",
+        "compile-project": "npm run compile -- -p ./src/project",
+        "compile-all": "npm run compile-runtime && npm run compile-node && npm run compile-http",
+        "clean":"rm -rf out && rm -rf lib",
+        "build":"npm run typescript && npm run react && npm run compile-all",
+        "build-project":"npm run build && npm run compile-project",
+        "watch-project": "npm run runtime:compile -- -w",
+        "watch-runtime": "npm run runtime:compile -- -w",
+        "watch-http": "npm run runtime:compile -- -w",
+        "watch-node": "npm run runtime:compile -- -w"
     }
 }

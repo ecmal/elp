@@ -21,21 +21,33 @@ class ApiIndexResource {
 }
 
 @Route('/app/v1/:path(*)')
-class ScriptResource {
-    private url: any;
+class ScriptResource extends Resource {
+    get isGzipAccepted(){
+        let enc = this.request.headers['accept-encoding'];
+        return enc && enc.indexOf('gzip') >= 0;
+    }
+    gzip(result){
+        if (this.isGzipAccepted) {
+            result.setHeader('content-encoding', 'gzip')
+        }
+        return result;
+    }
     @GET
     index() {
+        let res;
         let parts = this.url.params.path.match(/^(.*)\.(js|map)$/);
         if (parts && parts.length == 3) {
             let ext = parts[2].toLowerCase();
             let mid = parts[1].toLowerCase().replace(/^(.*)\.js$/, '$1');
+
             switch (ext) {
-                case 'js': return this.readJs(mid, this.url.query.bundle);
-                case 'map': return this.readMap(mid);
+                case 'js'  : res = this.readJs(mid, this.url.query.bundle);break;
+                case 'map' : res = this.readMap(mid);break;
             }
         } else {
-            return Result.html(`<h1>Page not found<h1>`, Result.STATUS.NOT_FOUND.code)
+            res = Result.html(`<h1>Page not found<h1>`, Result.STATUS.NOT_FOUND.code)
         }
+        return this.gzip(res);
     }
     readJs(mid, bundle = null) {
         function getDependencies(id, deps = { '@ecmal/runtime': System }) {

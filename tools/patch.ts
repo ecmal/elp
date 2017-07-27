@@ -33,6 +33,7 @@ function rewriteLines(lines:string[]){
     })
     
 }
+
 function compileTsc() {
     let oldPath = Files.resolve(tscPath, 'tsc.js');
     let newPath = Files.resolve(__dirname, '../lib/tsc.js')
@@ -124,7 +125,7 @@ function compileLib() {
     //console.info(newPath);
     Files.write(newPath, source);
 }
-function compileTs(){
+function compileTs() {
     let oldPath = Files.resolve(tscPath, 'typescript.js');
     let newPath = Files.resolve(__dirname, '../out/@ecmal/typescript/index.js')
     let source = Files.read(oldPath).trim();
@@ -142,7 +143,7 @@ function compileTs(){
     ].join('\n');
     Files.write(newPath, source);
 }
-function compileTsd(){
+function compileTsd() {
     let oldPath = Files.resolve(tscPath, 'typescript.d.ts');
     let newPath = Files.resolve(__dirname, '../out/@ecmal/typescript/index.d.ts')
     let source = Files.read(oldPath).trim();

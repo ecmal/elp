@@ -7,10 +7,10 @@ export const Http = {
             u = url.parse(u);
             let client = u.protocol=='https:'?https:http;
             return new Promise<{ content: string, status: number, headers: any }>((a, r) => {
-                let request = client.get(url, (response) => {
+                let request = client.get(u, (response) => {
                     let chunks = [];
                     response.on('error', e => r(e));
-                    response.on('data', (chunk) => chunks.push(chunk))
+                    response.on('data', (chunk) => chunks.push(chunk));
                     response.on('end', () => a({
                         status: response.statusCode,
                         headers: response.headers,
@@ -20,9 +20,9 @@ export const Http = {
                 request.on('error', e => r(e));
             })
         }
-        return doGet(url).then(r => {
+        return doGet(u).then(r => {
             if (r.headers.location) {
-                return doGet(url.resolve(url, r.headers.location));
+                return doGet(u.resolve(u, r.headers.location));
             } else {
                 return r;
             }
