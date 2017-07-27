@@ -8,7 +8,7 @@
         "start": "node ./test/project.js",
         "patch": "ts-node --fast tools/patch.ts",
         "compile":"node ./lib/tsc.js",
-        "project-compile": "npm run compile -- -p ./src/runtime",
+        "project-compile": "npm run compile -- -p ./src/project",
         "project-watch": "npm run runtime:compile -- -w",
         "runtime-compile": "npm run compile -- -p ./src/runtime",
         "runtime-watch": "npm run runtime:compile -- -w",

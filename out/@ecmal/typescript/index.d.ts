@@ -48,15 +48,6 @@ declare module "@ecmal/typescript/index" {
     type Path = string & {
         __pathBrand: any;
     };
-    interface FileMap<T> {
-        get(fileName: Path): T;
-        set(fileName: Path, value: T): void;
-        contains(fileName: Path): boolean;
-        remove(fileName: Path): void;
-        forEachValue(f: (key: Path, v: T) => void): void;
-        getKeys(): Path[];
-        clear(): void;
-    }
     interface TextRange {
         pos: number;
         end: number;
@@ -480,7 +471,7 @@ declare module "@ecmal/typescript/index" {
          * Text of identifier (with escapes converted to characters).
          * If the identifier begins with two underscores, this will begin with three.
          */
-        text: string;
+        text: __String;
         originalKeywordKind?: SyntaxKind;
         isInJSDocNamespace?: boolean;
     }
@@ -562,13 +553,21 @@ declare module "@ecmal/typescript/index" {
         name: BindingName;
         initializer?: Expression;
     }
-    interface PropertySignature extends TypeElement {
-        kind: SyntaxKind.PropertySignature | SyntaxKind.JSDocRecordMember;
+    interface TSPropertySignature extends TypeElement {
+        kind: SyntaxKind.PropertySignature;
         name: PropertyName;
         questionToken?: QuestionToken;
         type?: TypeNode;
         initializer?: Expression;
     }
+    interface JSDocPropertySignature extends TypeElement {
+        kind: SyntaxKind.JSDocRecordMember;
+        name: PropertyName;
+        questionToken?: QuestionToken;
+        type?: TypeNode;
+        initializer?: Expression;
+    }
+    type PropertySignature = TSPropertySignature | JSDocPropertySignature;
     interface PropertyDeclaration extends ClassElement {
         kind: SyntaxKind.PropertyDeclaration;
         questionToken?: QuestionToken;
@@ -623,19 +622,21 @@ declare module "@ecmal/typescript/index" {
     type ArrayBindingElement = BindingElement | OmittedExpression;
     /**
      * Several node kinds share function-like features such as a signature,
-     * a name, and a body. These nodes should extend FunctionLikeDeclaration.
+     * a name, and a body. These nodes should extend FunctionLikeDeclarationBase.
      * Examples:
      * - FunctionDeclaration
      * - MethodDeclaration
      * - AccessorDeclaration
      */
-    interface FunctionLikeDeclaration extends SignatureDeclaration {
+    interface FunctionLikeDeclarationBase extends SignatureDeclaration {
         _functionLikeDeclarationBrand: any;
         asteriskToken?: AsteriskToken;
         questionToken?: QuestionToken;
         body?: Block | Expression;
     }
-    interface FunctionDeclaration extends FunctionLikeDeclaration, DeclarationStatement {
+    type FunctionLikeDeclaration = FunctionDeclaration | MethodDeclaration | ConstructorDeclaration | GetAccessorDeclaration | SetAccessorDeclaration | FunctionExpression | ArrowFunction;
+    type FunctionLike = FunctionLikeDeclaration | FunctionTypeNode | ConstructorTypeNode | IndexSignatureDeclaration | MethodSignature | ConstructSignatureDeclaration | CallSignatureDeclaration;
+    interface FunctionDeclaration extends FunctionLikeDeclarationBase, DeclarationStatement {
         kind: SyntaxKind.FunctionDeclaration;
         name?: Identifier;
         body?: FunctionBody;
@@ -644,12 +645,12 @@ declare module "@ecmal/typescript/index" {
         kind: SyntaxKind.MethodSignature;
         name: PropertyName;
     }
-    interface MethodDeclaration extends FunctionLikeDeclaration, ClassElement, ObjectLiteralElement {
+    interface MethodDeclaration extends FunctionLikeDeclarationBase, ClassElement, ObjectLiteralElement {
         kind: SyntaxKind.MethodDeclaration;
         name: PropertyName;
         body?: FunctionBody;
     }
-    interface ConstructorDeclaration extends FunctionLikeDeclaration, ClassElement {
+    interface ConstructorDeclaration extends FunctionLikeDeclarationBase, ClassElement {
         kind: SyntaxKind.Constructor;
         parent?: ClassDeclaration | ClassExpression;
         body?: FunctionBody;
@@ -659,13 +660,13 @@ declare module "@ecmal/typescript/index" {
         kind: SyntaxKind.SemicolonClassElement;
         parent?: ClassDeclaration | ClassExpression;
     }
-    interface GetAccessorDeclaration extends FunctionLikeDeclaration, ClassElement, ObjectLiteralElement {
+    interface GetAccessorDeclaration extends FunctionLikeDeclarationBase, ClassElement, ObjectLiteralElement {
         kind: SyntaxKind.GetAccessor;
         parent?: ClassDeclaration | ClassExpression | ObjectLiteralExpression;
         name: PropertyName;
         body: FunctionBody;
     }
-    interface SetAccessorDeclaration extends FunctionLikeDeclaration, ClassElement, ObjectLiteralElement {
+    interface SetAccessorDeclaration extends FunctionLikeDeclarationBase, ClassElement, ObjectLiteralElement {
         kind: SyntaxKind.SetAccessor;
         parent?: ClassDeclaration | ClassExpression | ObjectLiteralExpression;
         name: PropertyName;
@@ -887,12 +888,12 @@ declare module "@ecmal/typescript/index" {
     }
     type FunctionBody = Block;
     type ConciseBody = FunctionBody | Expression;
-    interface FunctionExpression extends PrimaryExpression, FunctionLikeDeclaration {
+    interface FunctionExpression extends PrimaryExpression, FunctionLikeDeclarationBase {
         kind: SyntaxKind.FunctionExpression;
         name?: Identifier;
         body: FunctionBody;
     }
-    interface ArrowFunction extends Expression, FunctionLikeDeclaration {
+    interface ArrowFunction extends Expression, FunctionLikeDeclarationBase {
         kind: SyntaxKind.ArrowFunction;
         equalsGreaterThanToken: EqualsGreaterThanToken;
         body: ConciseBody;
@@ -1458,7 +1459,7 @@ declare module "@ecmal/typescript/index" {
         literal: LiteralTypeNode;
     }
     type JSDocTypeReferencingNode = JSDocThisType | JSDocConstructorType | JSDocVariadicType | JSDocOptionalType | JSDocNullableType | JSDocNonNullableType;
-    interface JSDocRecordMember extends PropertySignature {
+    interface JSDocRecordMember extends JSDocPropertySignature {
         kind: SyntaxKind.JSDocRecordMember;
         name: Identifier | StringLiteral | NumericLiteral;
         type?: JSDocType;
@@ -1634,7 +1635,7 @@ declare module "@ecmal/typescript/index" {
     }
     interface ParseConfigHost {
         useCaseSensitiveFileNames: boolean;
-        readDirectory(rootDir: string, extensions: string[], excludes: string[], includes: string[]): string[];
+        readDirectory(rootDir: string, extensions: ReadonlyArray<string>, excludes: ReadonlyArray<string>, includes: ReadonlyArray<string>, depth: number): string[];
         /**
          * Gets a value indicating whether the specified path exists and is a file.
          * @param path The path to test.
@@ -1761,9 +1762,13 @@ declare module "@ecmal/typescript/index" {
         getAugmentedPropertiesOfType(type: Type): Symbol[];
         getRootSymbols(symbol: Symbol): Symbol[];
         getContextualType(node: Expression): Type | undefined;
-        getResolvedSignature(node: CallLikeExpression, candidatesOutArray?: Signature[]): Signature | undefined;
+        /**
+         * returns unknownSignature in the case of an error. Don't know when it returns undefined.
+         * @param argumentCount Apparent number of arguments, passed in case of a possibly incomplete call. This should come from an ArgumentListInfo. See `signatureHelp.ts`.
+         */
+        getResolvedSignature(node: CallLikeExpression, candidatesOutArray?: Signature[], argumentCount?: number): Signature | undefined;
         getSignatureFromDeclaration(declaration: SignatureDeclaration): Signature | undefined;
-        isImplementationOfOverload(node: FunctionLikeDeclaration): boolean | undefined;
+        isImplementationOfOverload(node: FunctionLike): boolean | undefined;
         isUndefinedSymbol(symbol: Symbol): boolean;
         isArgumentsSymbol(symbol: Symbol): boolean;
         isUnknownSymbol(symbol: Symbol): boolean;
@@ -1933,14 +1938,59 @@ declare module "@ecmal/typescript/index" {
     }
     interface Symbol {
         flags: SymbolFlags;
-        name: string;
+        name: __String;
         declarations?: Declaration[];
         valueDeclaration?: Declaration;
         members?: SymbolTable;
         exports?: SymbolTable;
         globalExports?: SymbolTable;
     }
-    type SymbolTable = Map<Symbol>;
+    enum InternalSymbolName {
+        Call = "__call",
+        Constructor = "__constructor",
+        New = "__new",
+        Index = "__index",
+        ExportStar = "__export",
+        Global = "__global",
+        Missing = "__missing",
+        Type = "__type",
+        Object = "__object",
+        JSXAttributes = "__jsxAttributes",
+        Class = "__class",
+        Function = "__function",
+        Computed = "__computed",
+        Resolving = "__resolving__",
+        ExportEquals = "export=",
+        Default = "default",
+    }
+    /**
+     * This represents a string whose leading underscore have been escaped by adding extra leading underscores.
+     * The shape of this brand is rather unique compared to others we've used.
+     * Instead of just an intersection of a string and an object, it is that union-ed
+     * with an intersection of void and an object. This makes it wholly incompatible
+     * with a normal string (which is good, it cannot be misused on assignment or on usage),
+     * while still being comparable with a normal string via === (also good) and castable from a string.
+     */
+    type __String = (string & {
+        __escapedIdentifier: void;
+    }) | (void & {
+        __escapedIdentifier: void;
+    }) | InternalSymbolName;
+    /** EscapedStringMap based on ES6 Map interface. */
+    interface UnderscoreEscapedMap<T> {
+        get(key: __String): T | undefined;
+        has(key: __String): boolean;
+        set(key: __String, value: T): this;
+        delete(key: __String): boolean;
+        clear(): void;
+        forEach(action: (value: T, key: __String) => void): void;
+        readonly size: number;
+        keys(): Iterator<__String>;
+        values(): Iterator<T>;
+        entries(): Iterator<[__String, T]>;
+    }
+    /** SymbolTable based on ES6 Map interface. */
+    type SymbolTable = UnderscoreEscapedMap<Symbol>;
     enum TypeFlags {
         Any = 1,
         String = 2,
@@ -2014,7 +2064,7 @@ declare module "@ecmal/typescript/index" {
     interface ObjectType extends Type {
         objectFlags: ObjectFlags;
     }
-    /** Class and interface types (TypeFlags.Class and TypeFlags.Interface). */
+    /** Class and interface types (ObjectFlags.Class and ObjectFlags.Interface). */
     interface InterfaceType extends ObjectType {
         typeParameters: TypeParameter[];
         outerTypeParameters: TypeParameter[];
@@ -2030,7 +2080,7 @@ declare module "@ecmal/typescript/index" {
         declaredNumberIndexInfo: IndexInfo;
     }
     /**
-     * Type references (TypeFlags.Reference). When a class or interface has type parameters or
+     * Type references (ObjectFlags.Reference). When a class or interface has type parameters or
      * a "this" type, references to the class or interface are made using type references. The
      * typeArguments property specifies the types to substitute for the type parameters of the
      * class or interface and optionally includes an extra element that specifies the type to
@@ -2512,7 +2562,7 @@ declare module "@ecmal/typescript/index" {
      * A function that accepts and possibly transforms a node.
      */
     type Visitor = (node: Node) => VisitResult<Node>;
-    type VisitResult<T extends Node> = T | T[];
+    type VisitResult<T extends Node> = T | T[] | undefined;
     interface Printer {
         /**
          * Print a node and its subtree as-is, without any emit transformations.
@@ -2597,13 +2647,19 @@ declare module "@ecmal/typescript/index" {
     }
 }
 declare module "@ecmal/typescript/index" {
+    const versionMajorMinor = "2.5";
     /** The version of the TypeScript compiler release */
-    const version = "2.5.0-dev.20170624";
+    const version = "2.5.0-dev.20170712";
 }
 declare function setTimeout(handler: (...args: any[]) => void, timeout: number): any;
 declare function clearTimeout(handle: any): void;
 declare module "@ecmal/typescript/index" {
-    type FileWatcherCallback = (fileName: string, removed?: boolean) => void;
+    enum FileWatcherEventKind {
+        Created = 0,
+        Changed = 1,
+        Deleted = 2,
+    }
+    type FileWatcherCallback = (fileName: string, eventKind: FileWatcherEventKind) => void;
     type DirectoryWatcherCallback = (fileName: string) => void;
     interface WatchedFile {
         fileName: string;
@@ -2631,7 +2687,7 @@ declare module "@ecmal/typescript/index" {
         getExecutingFilePath(): string;
         getCurrentDirectory(): string;
         getDirectories(path: string): string[];
-        readDirectory(path: string, extensions?: string[], exclude?: string[], include?: string[]): string[];
+        readDirectory(path: string, extensions?: ReadonlyArray<string>, exclude?: ReadonlyArray<string>, include?: ReadonlyArray<string>, depth?: number): string[];
         getModifiedTime?(path: string): Date;
         /**
          * This should be cryptographically secure.
@@ -2780,7 +2836,14 @@ declare module "@ecmal/typescript/index" {
      * @param identifier The escaped identifier text.
      * @returns The unescaped identifier text.
      */
-    function unescapeIdentifier(identifier: string): string;
+    function unescapeLeadingUnderscores(identifier: __String): string;
+    /**
+     * Remove extra underscore from escaped identifier text content.
+     * @deprecated
+     * @param identifier The escaped identifier text.
+     * @returns The unescaped identifier text.
+     */
+    function unescapeIdentifier(id: string): string;
     function getNameOfDeclaration(declaration: Declaration): DeclarationName | undefined;
 }
 declare module "@ecmal/typescript/index" {
@@ -2954,11 +3017,12 @@ declare module "@ecmal/typescript/index" {
     function isToken(n: Node): boolean;
     function isLiteralExpression(node: Node): node is LiteralExpression;
     function isTemplateMiddleOrTemplateTail(node: Node): node is TemplateMiddle | TemplateTail;
+    function isStringTextContainingNode(node: Node): boolean;
     function isModifier(node: Node): node is Modifier;
     function isEntityName(node: Node): node is EntityName;
     function isPropertyName(node: Node): node is PropertyName;
     function isBindingName(node: Node): node is BindingName;
-    function isFunctionLike(node: Node): node is FunctionLikeDeclaration;
+    function isFunctionLike(node: Node): node is FunctionLike;
     function isClassElement(node: Node): node is ClassElement;
     function isClassLike(node: Node): node is ClassLikeDeclaration;
     function isAccessor(node: Node): node is AccessorDeclaration;
@@ -2992,9 +3056,9 @@ declare module "@ecmal/typescript/index" {
      *
      * @param node a given node to visit its children
      * @param cbNode a callback to be invoked for all child nodes
-     * @param cbNodeArray a callback to be invoked for embedded array
+     * @param cbNodes a callback to be invoked for embedded array
      */
-    function forEachChild<T>(node: Node, cbNode: (node: Node) => T | undefined, cbNodeArray?: (nodes: NodeArray<Node>) => T | undefined): T | undefined;
+    function forEachChild<T>(node: Node, cbNode: (node: Node) => T | undefined, cbNodes?: (nodes: NodeArray<Node>) => T | undefined): T | undefined;
     function createSourceFile(fileName: string, sourceText: string, languageVersion: ScriptTarget, setParentNodes?: boolean, scriptKind?: ScriptKind): SourceFile;
     function parseIsolatedEntityName(text: string, languageVersion: ScriptTarget): EntityName;
     /**
@@ -3091,7 +3155,7 @@ declare module "@ecmal/typescript/index" {
     function createPropertySignature(modifiers: Modifier[] | undefined, name: PropertyName | string, questionToken: QuestionToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertySignature;
     function updatePropertySignature(node: PropertySignature, modifiers: Modifier[] | undefined, name: PropertyName, questionToken: QuestionToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertySignature;
     function createProperty(decorators: Decorator[] | undefined, modifiers: Modifier[] | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertyDeclaration;
-    function updateProperty(node: PropertyDeclaration, decorators: Decorator[] | undefined, modifiers: Modifier[] | undefined, name: PropertyName, type: TypeNode | undefined, initializer: Expression | undefined): PropertyDeclaration;
+    function updateProperty(node: PropertyDeclaration, decorators: Decorator[] | undefined, modifiers: Modifier[] | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): PropertyDeclaration;
     function createMethodSignature(typeParameters: TypeParameterDeclaration[] | undefined, parameters: ParameterDeclaration[], type: TypeNode | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined): MethodSignature;
     function updateMethodSignature(node: MethodSignature, typeParameters: NodeArray<TypeParameterDeclaration> | undefined, parameters: NodeArray<ParameterDeclaration>, type: TypeNode | undefined, name: PropertyName, questionToken: QuestionToken | undefined): MethodSignature;
     function createMethod(decorators: Decorator[] | undefined, modifiers: Modifier[] | undefined, asteriskToken: AsteriskToken | undefined, name: string | PropertyName, questionToken: QuestionToken | undefined, typeParameters: TypeParameterDeclaration[] | undefined, parameters: ParameterDeclaration[], type: TypeNode | undefined, body: Block | undefined): MethodDeclaration;
@@ -3621,7 +3685,8 @@ declare module "@ecmal/typescript/index" {
     }
     interface Symbol {
         getFlags(): SymbolFlags;
-        getName(): string;
+        getName(): __String;
+        getUnescapedName(): string;
         getDeclarations(): Declaration[] | undefined;
         getDocumentationComment(): SymbolDisplayPart[];
         getJsDocTags(): JSDocTagInfo[];
@@ -3710,7 +3775,7 @@ declare module "@ecmal/typescript/index" {
         trace?(s: string): void;
         error?(s: string): void;
         useCaseSensitiveFileNames?(): boolean;
-        readDirectory?(path: string, extensions?: string[], exclude?: string[], include?: string[]): string[];
+        readDirectory?(path: string, extensions?: ReadonlyArray<string>, exclude?: ReadonlyArray<string>, include?: ReadonlyArray<string>, depth?: number): string[];
         readFile?(path: string, encoding?: string): string;
         fileExists?(path: string): boolean;
         getTypeRootsVersion?(): number;

@@ -1,5 +1,4 @@
-import "@ecmal/runtime";
-
+import system from "@ecmal/runtime";
 
 import * as React from "@ecmal/react/server";
 
