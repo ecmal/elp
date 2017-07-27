@@ -4,6 +4,7 @@ export interface Require {
 }
 declare const require:Require;
 export const process: any = require('process');
+export const url: any = require('http');
 export const http: any = require('http');
 export const https: any = require('https');
 export const fs: any = require('fs');

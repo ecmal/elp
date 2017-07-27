@@ -1,5 +1,7 @@
 {
     "name":"@ecmal/runtime",
+    "version":"0.0.1",
+    "extensions":[".html"],
     "compilerOptions": {
         "module": "system",
         "target": "es5",
@@ -9,6 +11,7 @@
         "noEmitHelpers": true,
         "importHelpers": true,
         "stripInternal": true,
-        "baseUrl": "../../out"
+        "baseUrl": "../../out",
+        "sourceRoot": "."
     }
 }

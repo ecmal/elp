@@ -13,7 +13,7 @@ export const Files = {
     read(path:string):string{
         return fs.readFileSync(path,'utf8');
     }
-}
+};
 
 function createFile(file){
     const splitPath = path.dirname(path.resolve(file)).split('/');
@@ -29,6 +29,6 @@ function createFile(file){
             currentPath = subPath;
         }
         return currentPath
-    }, '')
+    }, '');
     return file;
 }

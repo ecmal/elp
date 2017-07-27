@@ -1,13 +1,20 @@
 {
-  "name": "elp",
-  "version": "2.5.0-elp",
-  "description": "Ecmal Project",
-  "main": "index.js",
-  "license": "ISC",
-  "scripts": {
-    "patch":"ts-node --fast tools/patch.ts",
-    "compile-runtime":"node ./lib/tsc.js -p ./src/runtime",
-    "compile-core":"node ./lib/tsc.js -p ./src/core",
-    "compile-compiler":"node ./lib/tsc.js -p ./src/compiler"
-  }
+    "name": "@ecmal/elp",
+    "version": "2.5.0-elp",
+    "description": "Ecmal Project",
+    "main": "index.js",
+    "license": "ISC",
+    "scripts": {
+        "start": "node ./test/project.js",
+        "patch": "ts-node --fast tools/patch.ts",
+        "compile":"node ./lib/tsc.js",
+        "project-compile": "npm run compile -- -p ./src/runtime",
+        "project-watch": "npm run runtime:compile -- -w",
+        "runtime-compile": "npm run compile -- -p ./src/runtime",
+        "runtime-watch": "npm run runtime:compile -- -w",
+        "http-compile": "npm run compile -- -p ./src/http",
+        "http-watch": "npm run runtime:compile -- -w",
+        "node-compile": "npm run compile -- -p ./src/node",
+        "node-watch": "npm run runtime:compile -- -w"
+    }
 }

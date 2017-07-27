@@ -14,6 +14,9 @@ interface Module {
     url: string;
     exports?: any;
     requires?: string[];
+    source:string;
+    map:any;
+    resource(kind:string,type:string,data:string):Resource;
 }
 interface Modules {
     map<T>(condition: (m: Module) => T): T[];
@@ -37,16 +40,27 @@ interface ModuleExecutor {
 interface ModuleDefiner {
     (exporter: ModuleExporter, module: Module, require?:any, exports?:any, __filename?:any, __dirname?:any): ModuleExecutor | void
 }
+interface Resource {
+    kind : string;
+    type : string;
+    data : string;
+}
 interface System {
     platform: "app" | "web";
     url: string;
     root: string;
     modules: Modules;
+    read(id: string): Module;
+    load(id: string): Promise<Module>;
     require(id: string): any;
     import(id: string): Promise<any>;
-    register(module: Module): this;
     register(id: string, dependencies: string[], definer: ModuleDefiner): this;
 }
+declare var System:System;
+declare var module:Module;
+declare var require:{
+    (id:string):any;
+};
 interface Console {
     assert(test?: boolean, message?: string, ...optionalParams: any[]): void;
     clear(): void;
@@ -72,7 +86,9 @@ interface Console {
     trace(message?: any, ...optionalParams: any[]): void;
     warn(message?: any, ...optionalParams: any[]): void;
 }
-
+declare namespace React {
+    export function createElement();
+}
 declare var Console: {
     prototype: Console;
     new(): Console;
@@ -87,6 +103,8 @@ declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]
 declare function clearImmediate(immediateId: any): void;
 
 declare module "@ecmal/runtime" {
+    export const system:System;
+    export default system;
     export function __extends(d: Function, b: Function): void;
     export function __assign(t: any, ...sources: any[]): any;
     export function __rest(t: any, propertyNames: (string | symbol)[]): any;

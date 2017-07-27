@@ -1,13 +1,14 @@
-import * as Url from "url";
-import * as Https from "https";
+import {url,http,https} from "./node";
 
-export {Url};
+
 export const Http = {
-    async get(url): Promise<string> {
-        function doGet(url){
+    async get(u): Promise<string> {
+        function doGet(u){
+            u = url.parse(u);
+            let client = u.protocol=='https:'?https:http;
             return new Promise<{ content: string, status: number, headers: any }>((a, r) => {
-                let request = Https.get(url, (response) => {
-                    let chunks = []
+                let request = client.get(url, (response) => {
+                    let chunks = [];
                     response.on('error', e => r(e));
                     response.on('data', (chunk) => chunks.push(chunk))
                     response.on('end', () => a({
@@ -21,10 +22,10 @@ export const Http = {
         }
         return doGet(url).then(r => {
             if (r.headers.location) {
-                return doGet(Url.resolve(url, r.headers.location));
+                return doGet(url.resolve(url, r.headers.location));
             } else {
                 return r;
             }
         }).then(r => r.content);
     }
-}
+};

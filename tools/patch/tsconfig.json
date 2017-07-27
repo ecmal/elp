@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "noLib": true,
+        "module": "system",
+        "target": "es5",
+        "declaration": true,
+        "sourceMap": true,
+        "noEmitHelpers": true,
+        "importHelpers": true,
+        "stripInternal": true,
+        "baseUrl": "."
+    }
+}

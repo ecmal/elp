@@ -1,4 +1,3 @@
-import { Http } from "./utils/http";
 import { Files } from "./utils/fs";
 import { ts } from "./utils/node";
 
@@ -10,6 +9,30 @@ const tscPath = Files.resolve(ts.path, '..');
 console.info("ts.lib.path",tscPath);
 console.info("ec.lib.path",libPath);
 
+function rewriteLines(lines:string[]){
+    return lines.map((l,i,a)=>{
+        if(l.indexOf('function createLanguageServiceSourceFile')>0){
+            l = l.replace('scriptKind','scriptKind, options')
+        }
+        if(l.indexOf('ts.createSourceFile(fileName, text, scriptTarget, setNodeParents, scriptKind')>0){
+            l = l.replace('scriptKind','scriptKind, options')
+        }
+        if(l.indexOf('ts.createSourceFile(fileName, text, languageVersion, setParentNodes) : undefined;')>0){
+            l = l.replace('setParentNodes','setParentNodes, void 0, options')
+        }
+        if(l.indexOf('ts.createLanguageServiceSourceFile(fileName, scriptSnapshot, compilationSettings.target, version, false, scriptKind')>0){
+            l = l.replace('scriptKind', 'scriptKind, compilationSettings')
+        }
+        if(l.indexOf('function watchedDirectoryChanged')>0){
+            a[i+2] = a[i+2].replace('return','return ts.onUnsupportedSourceFile(fileName, compilerOptions)');
+        }
+        if(l.indexOf('var USE_NEW_TYPE_METADATA_FORMAT')>0){
+            l = l.replace('false','true');
+        }
+        return l;
+    })
+    
+}
 function compileTsc() {
     let oldPath = Files.resolve(tscPath, 'tsc.js');
     let newPath = Files.resolve(__dirname, '../lib/tsc.js')
@@ -17,6 +40,7 @@ function compileTsc() {
     let patch = Files.read(Files.resolve(__dirname, './patch/tsc.ts'));
     let lines = source.split('\n');
     let execLine = lines.pop();
+    lines = rewriteLines(lines);
     source = lines.join('\n');
     source = [
         source,
@@ -31,7 +55,6 @@ function compileTss() {
     function copy(path) {
         let oldPath = Files.resolve(tscPath, `${path}.js`);
         let newPath = Files.resolve(__dirname, `../lib/${path}.js`)
-
         Files.write(newPath, Files.read(oldPath));
     }
     copy('typingsInstaller');
@@ -44,6 +67,8 @@ function compileTss() {
     let patch = Files.read(Files.resolve(__dirname, './patch/tsc.ts'));
     let lines = source.split('\n');
     let execLine = '';
+    lines = rewriteLines(lines)
+    source = lines.join('\n');
     /*let execLine = 'ts.executeIoServer();';
     source = lines.map(l => {
         let line = l.trim();
@@ -96,7 +121,7 @@ function compileLib() {
     source = `/// <reference no-default-lib="true"/>\n${source}`;
 
     let newPath = Files.resolve(__dirname, '../lib/lib.d.ts')
-    console.info(newPath);
+    //console.info(newPath);
     Files.write(newPath, source);
 }
 function compileTs(){
@@ -105,6 +130,8 @@ function compileTs(){
     let source = Files.read(oldPath).trim();
     let patch = Files.read(Files.resolve(__dirname, './patch/tsc.ts'));
     let lines = source.split('\n');
+    lines = rewriteLines(lines)
+    source = lines.join('\n');
     source = [
         'System.register("@ecmal/typescript/index",[],function(exporter,module,require,exports,__filename,__dirname){',
         source,
