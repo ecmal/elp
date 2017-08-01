@@ -1,14 +1,10 @@
 
-import {HttpHeaders} from "@ecmal/http/common";
-import {AgentOptions} from "@ecmal/node/https";
-import {GoogleApiOptions} from "./api";
-import {GoogleAuth} from "./auth";
+import * as Url from "@ecmal/node/url";
 
-
-import {Buffer} from "@ecmal/node/buffer";
-
-import {HttpClient,HttpsClient,HttpRequest,HttpResponse} from "@ecmal/http/client";
-
+import { Qs } from "@ecmal/node/querystring";
+import { GoogleApiOptions } from "./api";
+import { GoogleAuth } from "./auth";
+import { Buffer } from "@ecmal/node/buffer";
 
 export interface GoogleRequest {
     protocol?: "http:" | "https:";
@@ -17,130 +13,211 @@ export interface GoogleRequest {
     path?: string;
     headers?: { [key: string]: any };
     timeout?: number;
-    query?:any;
-    body?:any;
-    file?:string;
-    media?:{
-        contentType:string;
-        contentSize:number;
-        contentBody:Buffer;
+    query?: any;
+    body?: any;
+    file?: string;
+    media?: {
+        contentType: string;
+        contentSize: number;
+        contentBody: Buffer;
     };
 }
-export class GoogleApiResponse extends HttpResponse {
-    async json():Promise<any>{
+export class GoogleApiResponse {
+
+    constructor(
+        readonly request:GoogleApiRequest,
+        private socket:any
+    ){}
+
+    async data():Promise<Buffer>{
+        return new Promise<Buffer>((accept,reject)=>{
+            let chunks:Buffer[] = [];
+            this.socket.on('data',chunk=>chunks.push(chunk));
+            this.socket.on('error',error=>reject(error));
+            this.socket.on('end',()=>{
+                accept(Buffer.concat(chunks));
+            })
+        })
+    }
+    async text(): Promise<any> {
+        return (await this.data()).toString('utf8')
+    }
+    async json(): Promise<any> {
         let json = {};
-        let text = await super.text();
-        if(text && text.length){
+        let text = await this.text();
+        if (text && text.length) {
             json = JSON.parse(text);
         }
         return json;
     }
 }
-export class GoogleApiRequest<T extends GoogleApiResponse> extends HttpRequest<T> {
-    constructor(options:GoogleRequest,api:GoogleApiBase,responseType?:Constructor<T>){
-        let transport;
-        if(options.protocol=="http:"){
-            options.protocol="http:";
-            transport = api.http;
-        }else{
-            options.protocol="https:";
-            transport = api.https;
-        }
-        if(options.query){
-            options.path+='?'+Qs.stringify(options.query);
-        }
-        super(options,responseType,transport);
+export class GoogleApiRequest {
+    private transport:any;
+    private socket:any;
+    private agent:any;
+
+    readonly response:GoogleApiResponse;
+    constructor(
+        protected options: GoogleRequest,
+        protected api: GoogleApiBase
+    ) { }
+
+    get method() {
+        return this.options.method;
     }
-    async send(text?:string|Buffer){
-        if(text){
-            if(!Buffer.isBuffer(text)){
-                text = new Buffer(text,'utf8');
+    get protocol() {
+        return this.options.protocol || 'https:';
+    }
+    get headers() {
+        if (!this.options.headers) {
+            this.options.headers = {};
+        }
+        return this.options.headers;
+    }
+
+    public setHeader(key: string, value: any) {
+        this.headers[key] = value;
+    }
+
+    public getHeader(key: string): any {
+        return this.headers[key];
+    }
+
+    async send(text?: string | Buffer): Promise<GoogleApiResponse> {
+        this.agent = this.api.getAgent(this.protocol);
+        switch (this.protocol) {
+            case 'http:': {
+                this.transport = require('http');
             }
-            return super.send(text);
-        }else{
-            return super.send();
+            case 'https:': {
+                this.transport = require('https');
+            }
         }
+        return new Promise<GoogleApiResponse>((accept,reject)=>{
+            let options = Object.assign({},this.options);
+            this.socket = this.transport.request(options,res=>{
+                accept(new GoogleApiResponse(this,res));
+            })
+            this.socket.on('error',error=>reject(error));
+            this.socket.end(text);
+        })
+       
     }
-    async sendWwwForm(data){
-        this.setHeader("content-type","application/x-www-form-urlencoded");
-        this.setHeader("cache-control","no-cache");
-        return this.send(`${Qs.stringify(data)}\n`);
-    }
-}
-export class HttpTransport extends HttpClient {
-    constructor(readonly options:AgentOptions){
-        super(options);
-    }
-    createConnection(options, cb){
-        options.path = null;
-        return super.createConnection( options, cb);
-    }
-}
-export class HttpsTransport extends HttpsClient {
-    constructor(readonly options:AgentOptions){
-        super(options);
+
+    async sendWwwForm(data: object) {
+        this.setHeader("content-type", "application/x-www-form-urlencoded");
+        this.setHeader("cache-control", "no-cache");
+        return this.send(`${Qs.encode(data)}\n`);
     }
 }
+
 export class GoogleApiError extends Error {
-    readonly code:number; 
-    readonly message:string;
-    readonly errors:any[];
-    constructor(error : {
-        code        : number, 
-        message     : string, 
-        errors      : any[]
-    }){
-        error.message = `${error.code?error.code+': ':''}${error.message}`;
-        if(Array.isArray(error.errors)){
-            error.message = `${error.message}\n${error.errors.map(e=>e.message).join('\n')}`
+    readonly code: number;
+    readonly message: string;
+    readonly errors: any[];
+    constructor(error: {
+        code: number,
+        message: string,
+        errors: any[]
+    }) {
+        error.message = `${error.code ? error.code + ': ' : ''}${error.message}`;
+        if (Array.isArray(error.errors)) {
+            error.message = `${error.message}\n${error.errors.map(e => e.message).join('\n')}`
         }
         super(error.message);
-        Object.assign(this,error);
+        Object.assign(this, error);
     }
 }
+
 export class GoogleApiBase {
-    readonly http:HttpTransport;
-    readonly https:HttpsTransport;
-    readonly auth:GoogleAuth;
-    
-    constructor(readonly options:GoogleApiOptions){
-        Object.defineProperties(this,{
-            http  : { value : new HttpTransport(options as AgentOptions) },
-            https : { value : new HttpsTransport(options as AgentOptions) },
-            auth  : { value : new GoogleAuth(this) },
+
+    readonly auth: GoogleAuth;
+
+    protected httpAgent;
+    protected httpsAgent;
+
+    /**
+     * Create google api base client
+     * @param options Google Api options and http agent settings
+     */
+    constructor(readonly options: GoogleApiOptions) {
+        Object.defineProperties(this, {
+            auth: { value: new GoogleAuth(this) },
         });
     }
-    public request(options:GoogleRequest){
-        return new GoogleApiRequest(options,this,GoogleApiResponse);
-    }
-    public async call(options:GoogleRequest){
-        function multipart(parts:any[]){
-            let boundry = Date.now().toString(32)+''+String(Math.random()).substring(2);
-            let media = { 
-                contentType : `multipart/related; boundary=${boundry}`, 
-                contentSize : 0,
-                contentBody : null
+
+    /**
+     * Return instance of http client agent based on provided protocol
+     * @param protocol 
+     */
+    public getAgent(protocol: 'http:' | 'https:') {
+        switch (protocol) {
+            case 'http:': {
+                if (!this.httpAgent) {
+                    let http = require('http');
+                    if (this.options.agent) {
+                        this.httpAgent = new http.Agent(this.options.agent);
+                    } else {
+                        this.httpAgent = http.globalAgent;
+                    }
+                }
+                return this.httpAgent;
             }
-            parts = parts.map(part=>{
-                if(Buffer.isBuffer(part.contentBody)){
+            case 'https:': {
+                if (!this.httpsAgent) {
+                    let https = require('https');
+                    if (this.options.agent) {
+                        this.httpsAgent = new https.Agent(this.options.agent);
+                    } else {
+                        this.httpsAgent = https.globalAgent;
+                    }
+                }
+                return this.httpsAgent;
+            }
+            default: throw new Error(`invalid protocol '${protocol}'`)
+        }
+    }
+
+    /**
+     * Create api request object and return without sending it 
+     * @param options 
+     */
+    public request(options: GoogleRequest) {
+        return new GoogleApiRequest(options, this);
+    }
+
+    /**
+     * Create api request send it and return api response in asyncronus way 
+     * @param options 
+     */
+    public async call(options: GoogleRequest) {
+        function multipart(parts: any[]) {
+            let boundry = Date.now().toString(32) + '' + String(Math.random()).substring(2);
+            let media = {
+                contentType: `multipart/related; boundary=${boundry}`,
+                contentSize: 0,
+                contentBody: null
+            }
+            parts = parts.map(part => {
+                if (Buffer.isBuffer(part.contentBody)) {
                     part.contentType = part.contentType || 'application/octet-stream';
                 } else
-                if(typeof part.contentBody == 'object'){
-                    part.contentType = part.contentType || 'application/json';
-                    part.contentBody = new Buffer(JSON.stringify(part.contentBody,null,2));
-                } else {
-                    part.contentType = part.contentType || 'text/plain';
-                    part.contentBody = new Buffer(String(part.contentBody))
-                } 
+                    if (typeof part.contentBody == 'object') {
+                        part.contentType = part.contentType || 'application/json';
+                        part.contentBody = new Buffer(JSON.stringify(part.contentBody, null, 2));
+                    } else {
+                        part.contentType = part.contentType || 'text/plain';
+                        part.contentBody = new Buffer(String(part.contentBody))
+                    }
                 part.contentSize = part.contentBody.length;
                 let headers = new Buffer([
                     `--${boundry}`,
                     `content-type: ${part.contentType}`,
                     `content-length: ${part.contentSize}`,
-                    '',''
+                    '', ''
                 ].join('\r\n'));
-                
-                let contents = [headers,part.contentBody,new Buffer('\r\n')];
+
+                let contents = [headers, part.contentBody, new Buffer('\r\n')];
                 return Buffer.concat(contents)
             });
             parts.push(new Buffer(`--${boundry}--`))
@@ -148,43 +225,43 @@ export class GoogleApiBase {
             media.contentSize = media.contentBody.length;
             return media;
         }
-        let body:Buffer = void 0;
-        let type:string = void 0;
-        
-        if(options.media){
+        let body: Buffer = void 0;
+        let type: string = void 0;
+
+        if (options.media) {
             await this.auth.refresh();
-            if(options.body){
+            if (options.body) {
                 body = options.body;
                 delete options.body;
                 options.media = multipart([
-                    {contentBody:body},
+                    { contentBody: body },
                     options.media
                 ])
-            }            
+            }
             type = options.media.contentType;
             body = options.media.contentBody;
             delete options.media;
         }
 
-        if(options.body){
+        if (options.body) {
             body = options.body;
-            if(Buffer.isBuffer(body)){
+            if (Buffer.isBuffer(body)) {
                 type = type || 'application/octet-stream';
             } else
-            if(typeof body == 'object'){
-                type = type || 'application/json';
-                body = new Buffer(JSON.stringify(body,null,2));
-            } else {
-                type = type || 'text/plain';
-                body = new Buffer(String(body))
-            }
+                if (typeof body == 'object') {
+                    type = type || 'application/json';
+                    body = new Buffer(JSON.stringify(body, null, 2));
+                } else {
+                    type = type || 'text/plain';
+                    body = new Buffer(String(body))
+                }
         }
-        
-        if(!options.headers){
+
+        if (!options.headers) {
             options.headers = {}
         }
         //console.info(options)
-        if(body){
+        if (body) {
             //console.info('======= BODY ====== {')
             //console.info(body.toString('utf8'));
             //console.info('======= BODY ====== }')
@@ -192,31 +269,32 @@ export class GoogleApiBase {
             options.headers['content-size'] = body.length;
         }
         options.headers['authorization'] = this.auth.header;
-      
-        let sendRequest = async ()=>{
+
+        let sendRequest = async () => {
             let req = this.request(options);
             let res = await req.send(body);
             let obj = await res.json();
             //console.info(res.statusCode,res.statusMessage,obj);
-            
-            if(obj.error){
+
+            if (obj.error) {
                 throw new GoogleApiError(obj.error);
-            }else{
+            } else {
                 return obj;
             }
         }
         let result = null;
-        try{
+        try {
             result = await sendRequest();
-        }catch(ex){
-            if(ex.code == 401 || ex.code == 403){
+        } catch (ex) {
+            if (ex.code == 401 || ex.code == 403) {
                 options.headers.authorization = await this.auth.refresh();
                 result = await sendRequest();
-            }else{
+            } else {
                 throw ex;
             }
 
         }
         return result;
     }
+
 }

@@ -1,10 +1,7 @@
-import * as Qs from "@ecmal/node/querystring";
-import * as Fs from "@ecmal/node/fs";
-import * as Crypto from "@ecmal/node/crypto";
-
 import { Buffer } from "@ecmal/node/buffer";
 import { GoogleApiBase, GoogleRequest } from "../base";
-import { HttpClient } from "@ecmal/http/client";
+
+declare const process;
 
 export type GoogleLogParent = "PROJECT" | "ORGANIZATION" | "BILLING" | "FOLDER";
 export type GoogleLogSeverity = "DEFAULT" | "DEBUG" | "INFO" | "NOTICE" | "WARNING" | "ERROR" | "CRITICAL" | "ALERT" | "EMERGENCY";

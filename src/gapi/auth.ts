@@ -1,82 +1,91 @@
-import Qs from "@ecmal/runtime/utils/qs";
 import Fs from "@ecmal/node/fs";
-import {Buffer} from "@ecmal/node/buffer";
-import {GoogleApiBase} from "./base";
+import { Qs } from "@ecmal/node/querystring";
+import { Buffer } from "@ecmal/node/buffer";
+import { GoogleApiBase } from "./base";
+import { GoogleApiOptions } from "./api";
 
 const Crypto = require('crypto');
 const process = require('process');
 
 const CONFIG = {
-    AUTH_ENDPOINT : "https://www.googleapis.com/oauth2/v4/token"
-}
-
-export interface GoogleAuthOptions {
-    keyFile?:string;
-    scopes:string[];
+    AUTH_ENDPOINT: "https://www.googleapis.com/oauth2/v4/token"
 }
 
 export interface GoogleAuthSession {
-    access_token?:string;
-    expires_in:number;
-    token_type:string;
+    access_token?: string;
+    expires_in: number;
+    token_type: string;
 }
 
 export class GoogleAuth {
-    readonly options:GoogleAuthOptions;
-    readonly session:GoogleAuthSession;
-    public get header(){
+    private keyPath;
+    readonly options: GoogleApiOptions;
+    readonly session: GoogleAuthSession;
+    public get header() {
         return `${this.session.token_type} ${this.session.access_token}`
     }
-    constructor(readonly api:GoogleApiBase){
-        Object.defineProperty(this,'options',{
-            value : api.options
+    constructor(readonly api: GoogleApiBase) {
+        Object.defineProperty(this, 'options', {
+            value: api.options
         })
-        Object.defineProperty(this,'session',{
-            value : {
-                token_type   : 'Bearer',
-                access_token : '',
-                expires_in   : 0
+        Object.defineProperty(this, 'session', {
+            value: {
+                token_type: 'Bearer',
+                access_token: '',
+                expires_in: 0
             }
-        })
+        });
+        if(this.getKeyPath()){
+            this.getKeyJson();
+        }
     }
-    protected getKeyPath(){
-        let file;
-        file = this.options.keyFile;
-        if(file && Fs.existsSync(file)){
+    protected getKeyPath(reload=false) {
+        let file = reload ? null : this.keyPath;
+        if(file){
             return file;
-        }else{
-            console.info(`Options Key File Not Found ${file||''}`);
+        }
+        file = this.options.keyFile;
+        if (file && Fs.existsSync(file)) {
+            return this.keyPath=file;
+        } else 
+        if(this.options.keyFile){
+            console.info(`Options Key File Not Found ${file || ''}`);
         }
         file = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        if(file && Fs.existsSync(file)){
-            return file;
-        }else{
-            console.info(`Env Key File Not Found ${file||''}`);
+        if (file && Fs.existsSync(file)) {
+            return this.keyPath=file;
+        } else {
+            console.info(`Env Key File Not Found ${file || ''}`);
         }
     }
-    protected getKeyJson(){
-        return JSON.parse(Fs.readFileSync(this.getKeyPath(),'utf8').toString());
+    protected getKeyJson() {
+        let text = Fs.readFileSync(this.getKeyPath(), 'utf8').toString();
+        let json = JSON.parse(text);
+        if (!this.options.project) {
+            this.options.project = json.project_id;
+        }
+        return json;
     }
-    protected toBase64Url(input:any){
-        let data:any = input;
-        if(typeof data=='string'){
-            data = new Buffer(input,'utf8');
+    protected toBase64Url(input: any) {
+        let data: any = input;
+        if (typeof data == 'string') {
+            data = new Buffer(input, 'utf8');
         }
         return data.toString('base64')
             .replace(/=/g, "")
             .replace(/\+/g, "-")
             .replace(/\//g, "_");
     }
-    protected getAssertion(scopes:string[]){       
-        let key  = this.getKeyJson();
-        let head = this.toBase64Url(JSON.stringify({alg:"RS256",typ:"JWT"}))
+    protected getAssertion(scopes: string[]) {
+        let key = this.getKeyJson();
+        let head = this.toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }))
         let body = this.toBase64Url(JSON.stringify({
-            iss     : key.client_id,
-            sub     : key.user_email || key.client_email,
-            scope   : scopes.join(' '),
-            aud     : CONFIG.AUTH_ENDPOINT,
-            exp     : Math.floor(Date.now() / 1000)+3600,
-            iat     : Math.floor(Date.now() / 1000)
+            iss: key.client_id,
+            sub: key.user_email || key.client_email,
+            scope: scopes.join(' '),
+            aud: CONFIG.AUTH_ENDPOINT,
+            exp: Math.floor(Date.now() / 1000) + 3600,
+            iat: Math.floor(Date.now() / 1000)
         }));
         const sign = Crypto.createSign('RSA-SHA256');
         const payload = `${head}.${body}`;
@@ -84,85 +93,85 @@ export class GoogleAuth {
         sign.end();
         return `${head}.${body}.${this.toBase64Url(sign.sign(key.private_key))}`;
     }
-    public async getSession(cached = true):Promise<GoogleAuthSession>{
+    public async getSession(cached = true): Promise<GoogleAuthSession> {
         let session = this.session;
-        if(!cached){
+        if (!cached) {
             //ya29.Gn9hBBNjlpCFWR_eB2rTsRVmYoYXhrTsF1q_WWrgcNWIo4dpGqV387HG4uLd5QFb_UPQQ6qwmL89qQH8bfWX_ojdQIKuN7fTaBcArmlo9i771SZAMpsodlXiaabk7fsuK6hUq0IkngYbqHsWjRoq-tH_hW4n9sKXKZ5P4rDweHHL
             session.access_token = null;
         }
-        if(session && session.access_token){
+        if (session && session.access_token) {
             return this.session;
-        }else{
-            let scopes:string[] = this.options.scopes;
+        } else {
+            let scopes: string[] = this.options.scopes;
             session = await this.tryGetJwtSession(scopes);
-            if(session){
-                return Object.assign(this.session,session);
-            }else{
+            if (session) {
+                return Object.assign(this.session, session);
+            } else {
                 console.info('JWT Auth Failed')
             }
             session = await this.tryGetGceSession(scopes);
-            if(session){
-               return Object.assign(this.session,session);
-            }else{
+            if (session) {
+                return Object.assign(this.session, session);
+            } else {
                 console.info('GCE Auth Failed')
             }
         }
         return session || null;
     }
-    public async getMeta(version='v1',path='',query={}){
-        let search  = Qs.encode(Object.assign({recursive:true},query));
+    public async getMeta(version = 'v1', path = '', query = {}) {
+        let search = Qs.encode(Object.assign({ recursive: true }, query));
         let req = this.api.request({
-            protocol    : "http:",
-            method      : "GET",
-            host        : "metadata.google.internal",
-            path        : `/computeMetadata/${version}/${path}?${search}`,
-            headers     : {
-                "metadata-flavor"   : "Google",
-                "user-agent"        : "ecaml-gcp/7.19.7",
-                "accept"            : "application/json"
+            protocol: "http:",
+            method: "GET",
+            host: "metadata.google.internal",
+            path: `/computeMetadata/${version}/${path}?${search}`,
+            headers: {
+                "metadata-flavor": "Google",
+                "user-agent": "ecaml-gcp/7.19.7",
+                "accept": "application/json"
             }
         })
-        try{
+        try {
             let res = await req.send();
             let body = await res.json();
             return body;
-        }catch(ex){
+        } catch (ex) {
             ex.stack = `Metadata request failed : ${ex.stack}`;
             throw ex;
         }
     }
-    public async refresh(){
+    public async refresh() {
         this.session.access_token = null;
         await this.getSession();
         return this.header;
     }
-    protected async tryGetGceSession(scopes){
-        try{
-            return await this.getMeta('v1','instance/service-accounts/default/token');
-        }catch(ex){
+    protected async tryGetGceSession(scopes) {
+        try {
+            return await this.getMeta('v1', 'instance/service-accounts/default/token');
+        } catch (ex) {
             console.info(ex.message);
             return false;
         }
     }
-    protected async tryGetJwtSession(scopes){
-        try{
+    protected async tryGetJwtSession(scopes) {
+        try {
             let fileName = this.getKeyPath();
-            if(Fs.existsSync(fileName)){
+            if (Fs.existsSync(fileName)) {
                 let req = this.api.request({
-                    host        : 'www.googleapis.com',
-                    method      : "POST",
-                    path        : "/oauth2/v4/token",
+                    host: 'www.googleapis.com',
+                    method: "POST",
+                    path: "/oauth2/v4/token",
                 })
                 let res = await req.sendWwwForm({
-                    grant_type : 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                    assertion  : this.getAssertion(scopes)
+                    grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    assertion: this.getAssertion(scopes)
                 });
                 return await res.json();
-            }else{
+            } else {
                 return false;
             }
-        }catch(ex){
-            console.info(ex.message);
+        } catch (ex) {
+            console.info(ex.stack || ex.message);
             return false;
         }
     }

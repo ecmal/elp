@@ -9,6 +9,7 @@
         "typescript": "ts-node --fast tools/patch.ts",
         "react": "ts-node --fast tools/react.ts",
         "compile":"node ./lib/tsc.js",
+        "compile-gapi": "npm run compile -- -p ./src/gapi",
         "compile-runtime": "npm run compile -- -p ./src/runtime",
         "compile-node": "npm run compile -- -p ./src/node",
         "compile-http": "npm run compile -- -p ./src/http",
@@ -17,9 +18,10 @@
         "clean":"rm -rf out && rm -rf lib",
         "build":"npm run typescript && npm run react && npm run compile-all",
         "build-project":"npm run build && npm run compile-project",
-        "watch-project": "npm run runtime:compile -- -w",
-        "watch-runtime": "npm run runtime:compile -- -w",
-        "watch-http": "npm run runtime:compile -- -w",
-        "watch-node": "npm run runtime:compile -- -w"
+        "watch-gapi": "npm run compile-gapi -- -w",
+        "watch-project": "npm run compile-project -- -w",
+        "watch-runtime": "npm run compile-runtime -- -w",
+        "watch-http": "npm run compile-http -- -w",
+        "watch-node": "npm run compile-node -- -w"
     }
 }

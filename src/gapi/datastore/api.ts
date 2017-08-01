@@ -1,11 +1,4 @@
-import * as Qs from "@ecmal/node/querystring";
-import * as Fs from "@ecmal/node/fs";
-import * as Crypto from "@ecmal/node/crypto";
-
-import { Buffer } from "@ecmal/node/buffer";
 import { GoogleApiBase, GoogleRequest } from "../base";
-import { HttpClient } from "@ecmal/http/client";
-
 import { LookupOptions, LookupResult } from "./types";
 import { RunQueryOptions, RunQueryResult } from "./types";
 import { AllocateIdsOptions, AllocateIdsResult } from "./types";

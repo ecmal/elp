@@ -7,13 +7,15 @@ import { GooglePubsub } from "./pubsub/api";
 import { GoogleTracing } from "./trace/api";
 
 export interface GoogleApiOptions {
-    keepAlive?: boolean;
-    keepAliveMsecs?: number;
-    maxSockets?: number;
-    maxFreeSockets?: number;
-    keyFile: string;
-    scopes: string[];
+    keyFile?: string;
+    scopes?: string[];
     project?: string;
+    agent?: {
+        keepAlive?: boolean;
+        keepAliveMsecs?: number;
+        maxSockets?: number;
+        maxFreeSockets?: number;
+    }
 }
 
 export class GoogleApi {
@@ -53,7 +55,7 @@ export class GoogleApi {
     public get tracing() {
         return new GoogleTracing(this.options);
     }
-    constructor(readonly options: GoogleApiOptions) {
+    constructor(readonly options: GoogleApiOptions={}) {
         Object.defineProperty(this, 'options', {
             value: options
         })

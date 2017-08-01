@@ -1,13 +1,10 @@
-import * as Qs from "@ecmal/node/querystring";
-import * as Fs from "@ecmal/node/fs";
-import * as Crypto from "@ecmal/node/crypto";
-
 import { cached } from "@ecmal/runtime/decorators";
-import { inject } from "@ecmal/runtime/decorators";
-import { Emitter } from "@ecmal/runtime/events";
 import { Buffer } from "@ecmal/node/buffer";
 import { GoogleApiBase, GoogleRequest } from "../base";
-import { HttpClient } from "@ecmal/http/client";
+
+
+declare const process;
+
 export type SpanKind = "RPC_SERVER" | "RPC_CLIENT";
 
 export interface Span {
@@ -29,6 +26,9 @@ export interface Trace {
 export interface Traces {
     traces: Trace[],
 }
+
+const Crypto = require('crypto');
+
 export class GoogleSpan implements Span {
     public startTime: string;
     public endTime: string;
