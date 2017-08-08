@@ -1,5 +1,9 @@
 {
     "name": "@ecmal/gapi",
+    "version":"0.0.1",
+    "dependencies": {
+        "@ecmal/http": "0.0.1"
+    },
     "compilerOptions": {
         "module": "system",
         "target": "es5",

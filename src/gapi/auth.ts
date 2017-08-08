@@ -9,7 +9,7 @@ const process = require('process');
 
 const CONFIG = {
     AUTH_ENDPOINT: "https://www.googleapis.com/oauth2/v4/token"
-}
+};
 
 export interface GoogleAuthSession {
     access_token?: string;
@@ -19,6 +19,7 @@ export interface GoogleAuthSession {
 
 export class GoogleAuth {
     private keyPath;
+    private keyJson;
     readonly options: GoogleApiOptions;
     readonly session: GoogleAuthSession;
     public get header() {
@@ -27,7 +28,7 @@ export class GoogleAuth {
     constructor(readonly api: GoogleApiBase) {
         Object.defineProperty(this, 'options', {
             value: api.options
-        })
+        });
         Object.defineProperty(this, 'session', {
             value: {
                 token_type: 'Bearer',
@@ -59,12 +60,15 @@ export class GoogleAuth {
         }
     }
     protected getKeyJson() {
+        if(this.keyJson){
+            return this.keyJson;
+        }
         let text = Fs.readFileSync(this.getKeyPath(), 'utf8').toString();
         let json = JSON.parse(text);
         if (!this.options.project) {
             this.options.project = json.project_id;
         }
-        return json;
+        return this.keyJson=json;
     }
     protected toBase64Url(input: any) {
         let data: any = input;

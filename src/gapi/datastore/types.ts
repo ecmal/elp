@@ -2,7 +2,7 @@
 export type ReadConsistency = "READ_CONSISTENCY_UNSPECIFIED" | "STRONG" | "EVENTUAL";
 
 export interface Entity {
-    key: Key;
+    key?: Key;
     properties: Dictionary<Value>
 }
 
@@ -31,32 +31,18 @@ export interface ReadOptions {
     transaction: string;
 }
 
-export interface LookupOptions {
-    params: LookupParams;
-    body: LookupBody;
-}
 export type EntityResults = EntityResult[];
 export interface LookupResult {
     found: EntityResults;
     missing: EntityResults;
     deferred: Keys;
 }
-export interface LookupParams {
-    projectId: string
-}
+
 export interface LookupBody {
     readOptions?: ReadOptions,
     keys: Keys,
 }
 
-
-export interface RunQueryOptions {
-    params: RunQueryParams;
-    body: RunQueryBody;
-}
-export interface RunQueryParams {
-    projectId: string
-}
 export interface RunQueryResult {
     batch: QueryResultBatch;
     query: Query;
@@ -82,9 +68,9 @@ export interface Query {
 
 export interface GqlQuery {
     queryString: string,
-    allowLiterals: boolean,
-    namedBindings: Dictionary<GqlQueryParameter>,
-    positionalBindings: GqlQueryParameter[],
+    allowLiterals?: boolean,
+    namedBindings?: Dictionary<GqlQueryParameter>,
+    positionalBindings?: GqlQueryParameter[],
 }
 export type GqlQueryParameter = {
     value: Value
@@ -122,19 +108,19 @@ export interface ValueType {
     excludeFromIndexes?: boolean;
 }
 export interface ValueNullType {
-    nullValue: null;
+    nullValue: null|'null';
 }
 export interface ValueBooleanType {
-    booleanValue: boolean;
+    booleanValue: boolean|'true'|'false';
 }
 export interface ValueIntegerType {
-    integerValue: string;
+    integerValue: string|number;
 }
 export interface ValueTimestampType {
-    timestampValue: string;
+    timestampValue: string|Date;
 }
 export interface ValueDoubleType {
-    doubleValue: number;
+    doubleValue: number|string;
 }
 export interface ValueKeyType {
     keyValue: Key;
@@ -152,7 +138,7 @@ export interface ValueEntityType {
     entityValue: Entity;
 }
 export interface ValueArrayType {
-    arrayValue: string;
+    arrayValue: ArrayValue;
 }
 export interface ArrayValue {
     values: Value[]
@@ -180,41 +166,16 @@ export interface QueryResultBatch {
 export type ResultType = "RESULT_TYPE_UNSPECIFIED" | "FULL" | "PROJECTION" | "KEY_ONLY"
 export type MoreResultsType = "MORE_RESULTS_TYPE_UNSPECIFIED" | "NOT_FINISHED" | "MORE_RESULTS_AFTER_LIMIT" | "MORE_RESULTS_AFTER_CURSOR" | "NO_MORE_RESULTS"
 
-
-
-export interface AllocateIdsOptions {
-    params: AllocateIdsParams;
-    body: AllocateIdsBody;
-}
-export interface AllocateIdsParams {
-    projectId: string
-}
 export interface AllocateIdsBody {
     keys: Keys;
 }
 export interface AllocateIdsResult {
     keys: Keys;
 }
-
-
-export interface BeginTransactionOptions {
-    params: BeginTransactionParams;
-}
-export interface BeginTransactionParams {
-    projectId: string
-}
 export interface BeginTransactionResult {
     transaction: string;
 }
 
-
-export interface CommitOptions {
-    params: CommitParams;
-    body: CommitBody;
-}
-export interface CommitParams {
-    projectId: string
-}
 export interface CommitBody {
     mode: "MODE_UNSPECIFIED" | "TRANSACTIONAL" | "NON_TRANSACTIONAL",
     mutations: Mutation[],
@@ -223,13 +184,6 @@ export interface CommitBody {
 export interface CommitResult {
     "mutationResults": MutationResult[],
     "indexUpdates": number,
-}
-export interface RollbackOptions {
-    params: RollbackParams;
-    body: RollbackBody;
-}
-export interface RollbackParams {
-    projectId: string;
 }
 export interface RollbackBody {
     transaction: string;

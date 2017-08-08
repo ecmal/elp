@@ -20,6 +20,7 @@ export function Consume(type: string): ClassDecorator {
 }
 export function route(path: string) {
     return (target, key?, desc?) => {
+
         Rest.register(path, target, key);
     }
 }

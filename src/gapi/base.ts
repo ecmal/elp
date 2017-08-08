@@ -1,6 +1,4 @@
 
-import * as Url from "@ecmal/node/url";
-
 import { Qs } from "@ecmal/node/querystring";
 import { GoogleApiOptions } from "./api";
 import { GoogleAuth } from "./auth";
@@ -84,24 +82,30 @@ export class GoogleApiRequest {
     }
 
     async send(text?: string | Buffer): Promise<GoogleApiResponse> {
+
         this.agent = this.api.getAgent(this.protocol);
         switch (this.protocol) {
             case 'http:': {
                 this.transport = require('http');
+                break;
             }
             case 'https:': {
                 this.transport = require('https');
+                break;
             }
         }
+
         return new Promise<GoogleApiResponse>((accept,reject)=>{
             let options = Object.assign({},this.options);
+            if(options.query){
+                options.path = `${options.path}?${Qs.encode(options.query)}`
+            }
             this.socket = this.transport.request(options,res=>{
                 accept(new GoogleApiResponse(this,res));
             })
             this.socket.on('error',error=>reject(error));
             this.socket.end(text);
         })
-       
     }
 
     async sendWwwForm(data: object) {
@@ -248,13 +252,13 @@ export class GoogleApiBase {
             if (Buffer.isBuffer(body)) {
                 type = type || 'application/octet-stream';
             } else
-                if (typeof body == 'object') {
-                    type = type || 'application/json';
-                    body = new Buffer(JSON.stringify(body, null, 2));
-                } else {
-                    type = type || 'text/plain';
-                    body = new Buffer(String(body))
-                }
+            if (typeof body == 'object') {
+                type = type || 'application/json';
+                body = new Buffer(JSON.stringify(body, null, 2));
+            } else {
+                type = type || 'text/plain';
+                body = new Buffer(String(body))
+            }
         }
 
         if (!options.headers) {
@@ -268,15 +272,15 @@ export class GoogleApiBase {
             options.headers['content-type'] = type;
             options.headers['content-size'] = body.length;
         }
-        options.headers['authorization'] = this.auth.header;
+        options.headers['authorization'] = await this.auth.getSession();
 
         let sendRequest = async () => {
             let req = this.request(options);
             let res = await req.send(body);
             let obj = await res.json();
             //console.info(res.statusCode,res.statusMessage,obj);
-
             if (obj.error) {
+                //console.info(options.path,JSON.stringify(obj,null,2));
                 throw new GoogleApiError(obj.error);
             } else {
                 return obj;
@@ -292,7 +296,6 @@ export class GoogleApiBase {
             } else {
                 throw ex;
             }
-
         }
         return result;
     }

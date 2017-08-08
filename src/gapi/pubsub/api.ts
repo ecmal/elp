@@ -175,10 +175,7 @@ export class PubsubTopic extends PubsubEntity implements Topic {
             }
             m.data = m.data.toString('base64');
         });
-        return this.api.resource.topics.publish({
-            params : { projectId:this.projectId, topicId:this.topicId },
-            body   : {messages}
-        })
+        return this.api.resource.topics.publish(this.topicId,messages)
     }
     public async subscribe(name: string, handler:(message:PubsubMessage)=>Promise<any>, subscription?: Subscription) {
         subscription = Object.assign({ topic: this.name }, subscription);
@@ -342,23 +339,15 @@ export class GooglePubsub extends GoogleApiBase {
                     return await this.call({
                         method: 'GET',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
+                        path: `/v1/projects/${this.options.project}/topics/${options.topicId}/subscriptions`
                     });
                 },
-                publish: async (options: {
-                    params: {
-                        topicId: string;
-                        projectId: string;
-                    }
-                    body: {
-                        messages: Message[]
-                    }
-                }): Promise<any> => {
+                publish: async (topicId: string, messages: Message[]): Promise<any> => {
                     return await this.call({
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/topics/${options.params.topicId}:publish`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/topics/${topicId}:publish`,
+                        body: messages
                     });
                 },
                 delete: async (options: any): Promise<any> => {

@@ -1,58 +1,58 @@
 import { GoogleApiBase, GoogleRequest } from "../base";
-import { LookupOptions, LookupResult } from "./types";
-import { RunQueryOptions, RunQueryResult } from "./types";
-import { AllocateIdsOptions, AllocateIdsResult } from "./types";
-import { BeginTransactionOptions, BeginTransactionResult } from "./types";
-import { CommitOptions, CommitResult } from "./types";
-import { RollbackOptions } from "./types";
+import { LookupBody, LookupResult } from "./types";
+import { RunQueryBody,RunQueryResult } from "./types";
+import { AllocateIdsBody, AllocateIdsResult } from "./types";
+import { BeginTransactionResult } from "./types";
+import { CommitBody, CommitResult } from "./types";
+import { RollbackBody  } from "./types";
 
 export class GoogleDatastore extends GoogleApiBase {
-    public async allocateIds(options:AllocateIdsOptions):Promise<AllocateIdsResult>{
+    public async allocateIds(options:AllocateIdsBody):Promise<AllocateIdsResult>{
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:allocateIds`,
-            body    : options.body
+            path    : `/v1/projects/${this.options.project}:allocateIds`,
+            body    : options
         });
     }
-    public async beginTransaction(options:BeginTransactionOptions):Promise<BeginTransactionResult>{
+    public async beginTransaction():Promise<BeginTransactionResult>{
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:beginTransaction`,
+            path    : `/v1/projects/${this.options.project}:beginTransaction`,
         });
     }
-    public async commit(options:CommitOptions):Promise<CommitResult>{
+    public async commit(options:CommitBody):Promise<CommitResult>{
         console.info(options);
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:commit`,
-            body    : options.body
+            path    : `/v1/projects/${this.options.project}:commit`,
+            body    : options
         });
     }
-    public async lookup(options:LookupOptions):Promise<LookupResult>{
+    public async lookup(options:LookupBody):Promise<LookupResult>{
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:lookup`,
-            body    : options.body
+            path    : `/v1/projects/${this.options.project}:lookup`,
+            body    : options
         });
     }
-    public async rollback(options:RollbackOptions):Promise<void>{
+    public async rollback(options:RollbackBody):Promise<void>{
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:rollback`,
-            body    : options.body
+            path    : `/v1/projects/${this.options.project}:rollback`,
+            body    : options
         });
     }
-    public async runQuery(options:RunQueryOptions):Promise<RunQueryResult>{
+    public async runQuery(options:RunQueryBody):Promise<RunQueryResult>{
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
-            path    : `/v1/projects/${options.params.projectId}:runQuery`,
-            body    : options.body
+            path    : `/v1/projects/${this.options.project}:runQuery`,
+            body    : options
         });
     }
     
