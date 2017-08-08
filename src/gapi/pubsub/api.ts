@@ -38,108 +38,110 @@ export class PubsubEntity {
     }
 }
 export class PubsubMessage implements Message {
-    data: Buffer;
+    data: any;
     attributes: Dictionary<string>;
     messageId: string;
     ackId: string;
     publishTime: string;
     protected subscription: Subscription;
     constructor(subscription: PubsubSubscription, options: Message) {
-        options.data = Buffer.from(String(options.data),'base64');
+        options.data = Buffer.from(String(options.data), 'base64');
+        if(!options.attributes || !options.attributes['content-type'] || options.attributes['content-type']=='application/json'){
+            try{
+                options.data = JSON.parse(options.data.toString('utf8'))    
+            }catch(ex){
+                console.error(ex);
+            }
+        }
         Object.defineProperty(this, 'subscription', {
             value: subscription
         })
         Object.assign(this, options)
         Object.freeze(this);
     }
-    accept() { 
+    accept() {
 
     }
-    done(){ 
+    done() {
 
     }
 }
 export class PubsubSubscription extends PubsubEntity implements Subscription {
     readonly topic: string;
-    readonly subscriptionId: string;
+    readonly name: string;
     readonly pushConfig: PushConfig;
     readonly ackDeadlineSeconds: number;
 
-    protected handler:(message:PubsubMessage)=>Promise<any>
+    protected handler: (message: PubsubMessage) => Promise<any>
     protected timer: any;
-    constructor(api: GooglePubsub, handler:(message:PubsubMessage)=>Promise<any>,options: Topic) {
+    
+    public subscriptionId:string;
+
+    constructor(api: GooglePubsub, handler: (message: PubsubMessage) => Promise<any>, options: Subscription) {
         super(api);
-        Object.defineProperty(this,'handler',{
-            value:handler
+        this.subscriptionId = options.name.split('/')[3]
+        Object.assign(this,options);
+        Object.defineProperty(this, 'handler', {
+            value: handler
         })
-        Object.assign(this, options)
         Object.freeze(this);
-        this.poll().catch(ex=>{
+        this.poll().catch(ex => {
             console.info(ex);
         });
     }
     protected async poll() {
-        let params = {
-            projectId: this.projectId,
-            subscriptionId: this.subscriptionId
-        }
-        let status = {}; 
+        let status = {};
         let commit = async (sec) => {
             let statuses = {
-                complete : [],
-                failed   : []
+                complete: [],
+                failed: []
             }
-            for(var i in status){
+            for (var i in status) {
                 let ackId = status[i];
-                if(ackId=='failed' || ackId=='complete'){
+                if (ackId == 'failed' || ackId == 'complete') {
                     statuses[ackId].push(i);
                     delete status[i];
                 }
             }
-            if(statuses.complete.length){
-                await this.api.resource.subscriptions.acknowledge({
-                    params: params,
-                    body: {ackIds:statuses.complete}
+            if (statuses.complete.length) {
+                await this.api.resource.subscriptions.acknowledge(this.subscriptionId,{ 
+                    ackIds: statuses.complete 
                 })
             }
-            if(statuses.failed.length){
-                await this.api.resource.subscriptions.modifyAckDeadline({
-                    params: params,
-                    body: {ackIds:statuses.failed,ackDeadlineSeconds:0}
+            if (statuses.failed.length) {
+                await this.api.resource.subscriptions.modifyAckDeadline(this.subscriptionId,{ 
+                    ackIds: statuses.failed,
+                    ackDeadlineSeconds: 0
                 })
-            }           
+            }
         }
         let wait = async (sec) => {
-            return new Promise(accept=>setTimeout(accept,sec))
+            return new Promise(accept => setTimeout(accept, sec))
         }
         let request = async () => {
-            console.info("POLL");
-            let result = await this.api.resource.subscriptions.pull({
-                params: params,
-                body: {
-                    maxMessages: 1,
-                    returnImmediately: false
-                }
+            //console.info("POLL");
+            let result = await this.api.resource.subscriptions.pull(this.subscriptionId,{
+                maxMessages: 1,
+                returnImmediately: false
             })
-            if(result.receivedMessages){
+            if (result.receivedMessages) {
                 let promises = result.receivedMessages.map(item => {
                     status[item.ackId] = 'pending';
-                    try{
-                        let message = new PubsubMessage(this,item.message);
+                    try {
+                        let message = new PubsubMessage(this, item.message);
                         return this.handler(message).then(
-                            r=>(status[item.ackId] = 'complete'),
-                            e=>(status[item.ackId] = 'failed')
+                            r => (status[item.ackId] = 'complete'),
+                            e => (status[item.ackId] = 'failed')
                         )
-                    }catch(ex){
-                        console.info("AAAAAAA",ex)
+                    } catch (ex) {
                         status[item.ackId] = 'failed'
                     }
-                    
+
                 })
                 await commit(await Promise.all(promises))
-            }            
+            }
         }
-        while(true){
+        while (true) {
             await request();
             await wait(1000);
         }
@@ -153,48 +155,47 @@ export class PubsubTopic extends PubsubEntity implements Topic {
         Object.assign(this, options)
         Object.freeze(this);
     }
-    async publish(messages:Message[]){
-        messages.forEach(m=>{
-            if(!m.attributes){
+    async publish(messages: Message[]) {
+        messages.forEach(m => {
+            if (!m.attributes) {
                 m.attributes = {};
             }
-            if(!Buffer.isBuffer(m.data)){
-                if(typeof m.data=='object'){
-                    m.data = Buffer.from(JSON.stringify(m.data),'utf8')
-                    m.attributes['content-type']='application/json'
+            if (!Buffer.isBuffer(m.data)) {
+                if (typeof m.data == 'object') {
+                    m.data = Buffer.from(JSON.stringify(m.data), 'utf8')
+                    m.attributes['content-type'] = 'application/json'
                 } else
-                if(typeof m.data=='string'){
-                   m.data = Buffer.from(JSON.stringify(m.data),'utf8')
-                   m.attributes['content-type']='plain/text'
-                }else{
-                    m.data = Buffer.from(JSON.stringify({}),'utf8')
-                    m.attributes['content-type']='application/json'
-                }
-            }else{
-                 m.attributes['content-type']='application/json'
+                    if (typeof m.data == 'string') {
+                        m.data = Buffer.from(JSON.stringify(m.data), 'utf8')
+                        m.attributes['content-type'] = 'plain/text'
+                    } else {
+                        m.data = Buffer.from(JSON.stringify({}), 'utf8')
+                        m.attributes['content-type'] = 'application/json'
+                    }
+            } else {
+                m.attributes['content-type'] = 'application/json'
             }
             m.data = m.data.toString('base64');
         });
-        return this.api.resource.topics.publish(this.topicId,messages)
+        return this.api.resource.topics.publish(this.topicId, messages)
     }
-    public async subscribe(name: string, handler:(message:PubsubMessage)=>Promise<any>, subscription?: Subscription) {
+    public async subscribe(name: string, handler: (message: PubsubMessage) => Promise<any>, subscription?: Subscription) {
         subscription = Object.assign({ topic: this.name }, subscription);
         let result, params = {
             subscriptionId: name,
             projectId: this.projectId,
         };
         try {
-            result = await this.api.resource.subscriptions.create({
-                params, body:subscription
-            });
+            
+            result = await this.api.resource.subscriptions.create(name,subscription);
         } catch (ex) {
             if (ex.code == 409) {
-                result = await this.api.resource.subscriptions.get({params});
+                result = await this.api.resource.subscriptions.get(name);
             } else {
                 throw ex;
             }
         }
-        return new PubsubSubscription(this.api,handler,Object.assign(params,result))
+        return new PubsubSubscription(this.api, handler, result)
     }
 }
 
@@ -203,143 +204,88 @@ export class GooglePubsub extends GoogleApiBase {
     public get resource() {
         return {
             subscriptions: {
-                create: async (options: { params: { subscriptionId: string, projectId: string }, body: Subscription }): Promise<any> => {
+                create: async (subscriptionId: string, body: Subscription): Promise<any> => {
                     return await this.call({
                         method: 'PUT',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions/${options.params.subscriptionId}`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}`,
+                        body: body
                     });
                 },
-                get: async (options: { params: { subscriptionId: string, projectId: string } }): Promise<any> => {
+                get: async (subscriptionId: string): Promise<any> => {
                     return await this.call({
                         method: 'GET',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions/${options.params.subscriptionId}`
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}`
                     });
                 },
-                list: async (options: { params: { projectId: string } }): Promise<any> => {
+                list: async (): Promise<any> => {
                     return await this.call({
                         method: 'GET',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions`
+                        path: `/v1/projects/${this.options.project}/subscriptions`
                     });
                 },
-                pull: async (options: {
-                    params: {
-                        subscriptionId: string;
-                        projectId: string;
-                    }
-                    body: {
-                        returnImmediately: boolean;
-                        maxMessages: number;
-                    }
-                }): Promise<any> => {
+                pull: async (subscriptionId: string, body: { returnImmediately: boolean; maxMessages: number; }): Promise<any> => {
                     return await this.call({
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions/${options.params.subscriptionId}:pull`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}:pull`,
+                        body: body
                     });
                 },
-                acknowledge: async (options: {
-                    params: {
-                        subscriptionId: string;
-                        projectId: string;
-                    }
-                    body: {
-                        ackIds: string[],
-                    }
-                }): Promise<any> => {
+                acknowledge: async (subscriptionId: string, body: {ackIds: string[]}): Promise<any> => {
                     return await this.call({
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions/${options.params.subscriptionId}:acknowledge`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}:acknowledge`,
+                        body: body
                     });
                 },
-                modifyPushConfig: async (options: {
-                    params: {
-                        subscriptionId: string;
-                        projectId: string;
-                    }
-                    body: {
-                        pushConfig: PushConfig,
-                    }
-                }): Promise<any> => {
+                modifyPushConfig: async (subscriptionId: string, body: {pushConfig: PushConfig}): Promise<any> => {
                     return await this.call({
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/topics/${options.params.subscriptionId}:modifyPushConfig`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/topics/${subscriptionId}:modifyPushConfig`,
+                        body: body
                     });
                 },
-                modifyAckDeadline: async (options: {
-                    params: {
-                        subscriptionId: string;
-                        projectId: string;
-                    }
-                    body: {
-                        ackIds: string[];
-                        ackDeadlineSeconds: number;
-                    }
-                }): Promise<any> => {
+                modifyAckDeadline: async (subscriptionId: string, body: {ackIds: string[];ackDeadlineSeconds: number;}): Promise<any> => {
                     return await this.call({
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.params.projectId}/subscriptions/${options.params.subscriptionId}:modifyAckDeadline`,
-                        body: options.body
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}:modifyAckDeadline`,
+                        body: body
                     });
                 },
-                delete: async (options: any): Promise<any> => {
+                delete: async (subscriptionId: string): Promise<any> => {
                     return await this.call({
-                        method: 'GET',
+                        method: 'DELETE',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
+                        path: `/v1/projects/${this.options.project}/subscriptions/${subscriptionId}`
                     });
-                },
-                setIamPolicy: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
-                getIamPolicy: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
-                testIamPermissions: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
+                }
             },
             topics: {
-                create: async (options: any): Promise<any> => {
+                create: async (topicId: string): Promise<any> => {
                     return await this.call({
                         method: 'PUT',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}`
+                        path: `/v1/projects/${this.options.project}/topics/${topicId}`
                     });
                 },
-                get: async (options: any): Promise<any> => {
+                get:async (topicId: string): Promise<any> => {
                     return await this.call({
                         method: 'GET',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}`
+                        path: `/v1/projects/${this.options.project}/topics/${topicId}`
                     });
                 },
-                list: async (options: any): Promise<any> => {
+                list: async (): Promise<any> => {
                     return await this.call({
                         method: 'GET',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${this.options.project}/topics/${options.topicId}/subscriptions`
+                        path: `/v1/projects/${this.options.project}/topics`
                     });
                 },
                 publish: async (topicId: string, messages: Message[]): Promise<any> => {
@@ -347,62 +293,42 @@ export class GooglePubsub extends GoogleApiBase {
                         method: 'POST',
                         host: 'pubsub.googleapis.com',
                         path: `/v1/projects/${this.options.project}/topics/${topicId}:publish`,
-                        body: messages
+                        body: {messages}
                     });
                 },
-                delete: async (options: any): Promise<any> => {
+                delete: async (topicId: string): Promise<any> => {
                     return await this.call({
-                        method: 'GET',
+                        method: 'DELETE',
                         host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
-                setIamPolicy: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
-                getIamPolicy: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
-                    });
-                },
-                testIamPermissions: async (options: any): Promise<any> => {
-                    return await this.call({
-                        method: 'GET',
-                        host: 'pubsub.googleapis.com',
-                        path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
+                        path: `/v1/projects/${this.options.project}/topics/${topicId}`
                     });
                 },
                 subscriptions: {
-                    list: async (options: any): Promise<any> => {
+                    list: async (topicId: string): Promise<any> => {
                         return await this.call({
                             method: 'GET',
                             host: 'pubsub.googleapis.com',
-                            path: `/v1/projects/${options.projectId}/topics/${options.topicId}/subscriptions`
+                            path: `/v1/projects/${this.options.project}/topics/${topicId}/subscriptions`
                         });
                     }
                 }
             }
         }
     }
-   
-    async createTopic(options: { projectId, topicId }) {
+
+    async createTopic(topicId:string) {
         let result;
         try {
-            result = await this.resource.topics.create(options);
+            result = await this.resource.topics.create(topicId);
         } catch (ex) {
             if (ex.code == 409) {
-                result = await this.resource.topics.get(options);
+                result = await this.resource.topics.get(topicId);
             } else {
+                console.error(ex)
                 throw ex;
             }
         }
-        return new PubsubTopic(this, Object.assign(result, options));
+        return new PubsubTopic(this, Object.assign(result, {topicId}));
     }
 
 }

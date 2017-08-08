@@ -23,7 +23,6 @@ export class GoogleDatastore extends GoogleApiBase {
         });
     }
     public async commit(options:CommitBody):Promise<CommitResult>{
-        console.info(options);
         return await this.call({
             method  : 'POST',
             host    : 'datastore.googleapis.com',
