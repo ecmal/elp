@@ -1,10 +1,10 @@
 {
     "name"                  : "@ecmal/elp",
-    "version"               : "2.5.1-elp",
+    "version"               : "2.5.2-elp",
     "description"           : "Ecmal Typescript Compiler",
     "license"               : "UNLICENSED",
     "author"                : "Mamble Inc. <ecmal@mamble.co>",
-    "repository"            : "https://github.com/ecmal/compiler.git",
+    "repository"            : "https://github.com/ecmal/elp.git",
     "contributors"          : ["Sergey Mamyan <sergey@mamble.co>"],
     "homepage"              : "https://github.com/ecmal/elp",
     "bugs"                  : "https://github.com/ecmal/elp/issues",
