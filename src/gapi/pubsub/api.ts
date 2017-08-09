@@ -1,7 +1,6 @@
-import * as Fs from "@ecmal/node/fs";
 import { cached } from "@ecmal/runtime/decorators";
 import { Buffer } from "@ecmal/node/buffer";
-import { GoogleApiBase, GoogleRequest } from "../base";
+import { GoogleApiBase } from "../base";
 
 export interface Topic {
     name: string;
@@ -55,8 +54,8 @@ export class PubsubMessage implements Message {
         }
         Object.defineProperty(this, 'subscription', {
             value: subscription
-        })
-        Object.assign(this, options)
+        });
+        Object.assign(this, options);
         Object.freeze(this);
     }
     accept() {
@@ -83,7 +82,7 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
         Object.assign(this,options);
         Object.defineProperty(this, 'handler', {
             value: handler
-        })
+        });
         Object.freeze(this);
         this.poll().catch(ex => {
             console.info(ex);
@@ -95,7 +94,7 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
             let statuses = {
                 complete: [],
                 failed: []
-            }
+            };
             for (var i in status) {
                 let ackId = status[i];
                 if (ackId == 'failed' || ackId == 'complete') {
@@ -114,16 +113,16 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
                     ackDeadlineSeconds: 0
                 })
             }
-        }
+        };
         let wait = async (sec) => {
             return new Promise(accept => setTimeout(accept, sec))
-        }
+        };
         let request = async () => {
             //console.info("POLL");
             let result = await this.api.resource.subscriptions.pull(this.subscriptionId,{
                 maxMessages: 1,
                 returnImmediately: false
-            })
+            });
             if (result.receivedMessages) {
                 let promises = result.receivedMessages.map(item => {
                     status[item.ackId] = 'pending';
@@ -137,10 +136,10 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
                         status[item.ackId] = 'failed'
                     }
 
-                })
+                });
                 await commit(await Promise.all(promises))
             }
-        }
+        };
         while (true) {
             await request();
             await wait(1000);
@@ -324,7 +323,7 @@ export class GooglePubsub extends GoogleApiBase {
             if (ex.code == 409) {
                 result = await this.resource.topics.get(topicId);
             } else {
-                console.error(ex)
+                console.error(ex);
                 throw ex;
             }
         }

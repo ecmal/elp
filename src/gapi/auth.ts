@@ -70,7 +70,7 @@ export class GoogleAuth {
         }
         return this.keyJson=json;
     }
-    protected toBase64Url(input: any) {
+    protected static toBase64Url(input: any) {
         let data: any = input;
         if (typeof data == 'string') {
             data = new Buffer(input, 'utf8');
@@ -82,8 +82,8 @@ export class GoogleAuth {
     }
     protected getAssertion(scopes: string[]) {
         let key = this.getKeyJson();
-        let head = this.toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }))
-        let body = this.toBase64Url(JSON.stringify({
+        let head = GoogleAuth.toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }))
+        let body = GoogleAuth.toBase64Url(JSON.stringify({
             iss: key.client_id,
             sub: key.user_email || key.client_email,
             scope: scopes.join(' '),
@@ -95,12 +95,11 @@ export class GoogleAuth {
         const payload = `${head}.${body}`;
         sign.write(payload);
         sign.end();
-        return `${head}.${body}.${this.toBase64Url(sign.sign(key.private_key))}`;
+        return `${head}.${body}.${GoogleAuth.toBase64Url(sign.sign(key.private_key))}`;
     }
     public async getSession(cached = true): Promise<GoogleAuthSession> {
         let session = this.session;
         if (!cached) {
-            //ya29.Gn9hBBNjlpCFWR_eB2rTsRVmYoYXhrTsF1q_WWrgcNWIo4dpGqV387HG4uLd5QFb_UPQQ6qwmL89qQH8bfWX_ojdQIKuN7fTaBcArmlo9i771SZAMpsodlXiaabk7fsuK6hUq0IkngYbqHsWjRoq-tH_hW4n9sKXKZ5P4rDweHHL
             session.access_token = null;
         }
         if (session && session.access_token) {
@@ -109,12 +108,14 @@ export class GoogleAuth {
             let scopes: string[] = this.options.scopes;
             session = await this.tryGetJwtSession(scopes);
             if (session) {
-                return Object.assign(this.session, session);
+                Object.assign(this.session, session);
+                return this.session
             } else {
                 console.info('JWT Auth Failed')
             }
             session = await this.tryGetGceSession(scopes);
             if (session) {
+                console.info("UPDATE",session);
                 return Object.assign(this.session, session);
             } else {
                 console.info('GCE Auth Failed')
@@ -134,11 +135,10 @@ export class GoogleAuth {
                 "user-agent": "ecaml-gcp/7.19.7",
                 "accept": "application/json"
             }
-        })
+        });
         try {
             let res = await req.send();
-            let body = await res.json();
-            return body;
+            return await res.json();
         } catch (ex) {
             ex.stack = `Metadata request failed : ${ex.stack}`;
             throw ex;
@@ -165,7 +165,7 @@ export class GoogleAuth {
                     host: 'www.googleapis.com',
                     method: "POST",
                     path: "/oauth2/v4/token",
-                })
+                });
                 let res = await req.sendWwwForm({
                     grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
                     assertion: this.getAssertion(scopes)

@@ -1,4 +1,4 @@
-import { GoogleApiBase, GoogleRequest } from "../base";
+import { GoogleApiBase } from "../base";
 import { LookupBody, LookupResult } from "./types";
 import { RunQueryBody,RunQueryResult } from "./types";
 import { AllocateIdsBody, AllocateIdsResult } from "./types";

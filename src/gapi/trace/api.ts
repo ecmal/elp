@@ -1,6 +1,5 @@
 import { cached } from "@ecmal/runtime/decorators";
-import { Buffer } from "@ecmal/node/buffer";
-import { GoogleApiBase, GoogleRequest } from "../base";
+import { GoogleApiBase } from "../base";
 
 
 declare const process;

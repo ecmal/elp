@@ -52,6 +52,7 @@ export class GoogleApi {
     public get pubsub() {
         return new GooglePubsub(this.options);
     }
+    @cached
     public get tracing() {
         return new GoogleTracing(this.options);
     }

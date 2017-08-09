@@ -1,12 +1,10 @@
-import * as Fs from "@ecmal/node/fs";
 import { cached } from "@ecmal/runtime/decorators";
-import { Buffer } from "@ecmal/node/buffer";
-import { GoogleApiBase, GoogleRequest } from "../base";
+import { GoogleApiBase } from "../base";
 
 
-import { Project, ProjectReference } from "./types";
+import { Project } from "./types";
 import { Dataset, DatasetReference } from "./types";
-import { Job, JobReference } from "./types";
+import { Job } from "./types";
 import {
     JobConfiguration,
     CopyJobConfiguration,
@@ -74,7 +72,7 @@ export class BigqueryDataset extends BigqueryEntity implements Dataset {
                     Object.setPrototypeOf(p, BigqueryTable.prototype);
                     Object.defineProperty(tables, p.tableReference.tableId, {
                         value: BigqueryTable.call(p, this) || p
-                    })
+                    });
                     return tables;
                 }, Object.create(null))
             })
@@ -99,12 +97,12 @@ export class BigqueryJob implements Job {
     public get query():any{return void 0}
     public get media():any{return void 0}
     async run(extra?:{media?:any,query?:any}): Promise<this> {
-        let result = await this.project.api.resource.jobs.insert({
+        await this.project.api.resource.jobs.insert({
             params  : { projectId: this.project.id },
             query   : extra.query,
             media   : extra.media,
             body    : { configuration: this.configuration }
-        })
+        });
         return this;
     }
 }

@@ -1,7 +1,9 @@
 {
-    "name":"@ecmal/runtime",
-    "version":"0.0.1",
-    "extensions":[".html"],
+    "name": "@ecmal/runtime",
+    "version": "0.0.2",
+    "bin": {
+        "elr": "./bin/cli.js"
+    },
     "compilerOptions": {
         "module": "system",
         "target": "es5",

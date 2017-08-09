@@ -1,5 +1,4 @@
-import { Buffer } from "@ecmal/node/buffer";
-import { GoogleApiBase, GoogleRequest } from "../base";
+import { GoogleApiBase } from "../base";
 
 declare const process;
 
@@ -56,7 +55,7 @@ export class GoogleLog {
     private requests:any[];
     public entry:any;
     constructor(logging: GoogleLogging, parentType: GoogleLogParent, parentId: string, logId: string, resource: any, labels: any) {
-        let logName = `${parentType}s/${parentId}/logs/${encodeURIComponent(logId)}`.toLowerCase()
+        let logName = `${parentType}s/${parentId}/logs/${encodeURIComponent(logId)}`.toLowerCase();
         Object.defineProperties(this, {
             timer       : { value : null, writable: true },
             logging     : { value : logging },
@@ -73,7 +72,7 @@ export class GoogleLog {
         let entry = patch ||{
             severity,
             jsonPayload : {message}
-        }
+        };
         Object.assign(entry,this.entry);
         entry.severity = severity;
         if(!entry.jsonPayload){
@@ -119,7 +118,7 @@ export class GoogleLog {
                 resource        : this.resource,
                 entries         : this.entries.splice(0)
             });
-        }
+        };
         if (!this.timer) {
             this.timer = setTimeout(()=>{
                 sendRequest().then(
@@ -171,12 +170,11 @@ export class GoogleLogging extends GoogleApiBase {
     }
     async deleteProjectLog(logId: string, projectId?: string) {
         projectId = projectId || this.options.project;
-        let result = await this.call({
+        return await this.call({
             method: 'DELETE',
             host: 'logging.googleapis.com',
             path: `/v2/projects/${projectId}/logs/${encodeURIComponent(logId)}`,
-        });
-        return result;
+        })
     }
     public getLog(type: GoogleLogParent, parentId: string, logId: string, resource: any, labels: any = {}): GoogleLog {
         return new GoogleLog(this, type, parentId, logId, resource, labels);

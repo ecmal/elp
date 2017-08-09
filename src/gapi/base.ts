@@ -145,6 +145,7 @@ export class GoogleApiBase {
      * @param options Google Api options and http agent settings
      */
     constructor(readonly options: GoogleApiOptions) {
+        console.info(new.target.name,"Created");
         Object.defineProperties(this, {
             auth: { value: new GoogleAuth(this) },
         });
@@ -201,7 +202,7 @@ export class GoogleApiBase {
                 contentType: `multipart/related; boundary=${boundry}`,
                 contentSize: 0,
                 contentBody: null
-            }
+            };
             parts = parts.map(part => {
                 if (Buffer.isBuffer(part.contentBody)) {
                     part.contentType = part.contentType || 'application/octet-stream';
@@ -233,7 +234,9 @@ export class GoogleApiBase {
         let type: string = void 0;
 
         if (options.media) {
-            await this.auth.refresh();
+            //refresh for media
+            //console.info("refresh for media")
+            //await this.auth.refresh();
             if (options.body) {
                 body = options.body;
                 delete options.body;
@@ -272,8 +275,8 @@ export class GoogleApiBase {
             options.headers['content-type'] = type;
             options.headers['content-size'] = body.length;
         }
-        options.headers['authorization'] = await this.auth.getSession();
-
+        await this.auth.getSession();
+        options.headers['authorization'] = this.auth.header;
         let sendRequest = async () => {
             let req = this.request(options);
             let res = await req.send(body);
@@ -285,7 +288,7 @@ export class GoogleApiBase {
             } else {
                 return obj;
             }
-        }
+        };
         let result = null;
         try {
             result = await sendRequest();
