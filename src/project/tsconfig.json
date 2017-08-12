@@ -1,23 +1,39 @@
 {
-    "name":"@vendor/project",
-    "version":"0.0.1",
-    "resources": {
-        "png"   : "image/png",
-        "html"  : "text/html"
+    "name"                        : "@vendor/project",
+    "version"                     : "0.0.3",
+    "description"                 : "Ecmal Sample Project",
+    "license"                     : "UNLICENSED",
+    "author"                      : "Mamble Inc. <ecmal@mamble.co>",
+    "repository"                  : "https://github.com/ecmal/elp.git",
+    "contributors"                : ["Sergey Mamyan <sergey@mamble.co>"],
+    "homepage"                    : "https://github.com/ecmal/elp",
+    "bugs"                        : "https://github.com/ecmal/elp/issues",
+    "keywords"                    : ["typescript","ecmal","node"],
+    "types"                       : "index.d.ts",
+    "resources"                   : {
+        "png"                     : "image/png",
+        "html"                    : "text/html"
     },
-    "compilerOptions": {
-        "module": "system",
-        "target": "es5",
-        "declaration": true,
-        "sourceMap": true,
-        "outDir": "../../node_modules",
-        "noEmitHelpers": true,
-        "importHelpers": true,
-        "stripInternal": true,
-        "baseUrl": "../../node_modules",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "jsx": "react",
-        "sourceRoot": "."
+    "compilerOptions"             : {
+        "module"                  : "system",
+        "target"                  : "es5",
+        "jsx"                     : "react",
+        "declaration"             : true,
+        "sourceMap"               : true,
+        "sourceRoot"              : ".",
+        "baseUrl"                 : "../../node_modules",
+        "outDir"                  : "../../node_modules",
+        "noEmitHelpers"           : true,
+        "importHelpers"           : true,
+        "stripInternal"           : true,
+        "emitDecoratorMetadata"   : true,
+        "experimentalDecorators"  : true
+    },
+    "dependencies"                : {
+        "@ecmal/runtime"          : "^0.0.1",
+        "@ecmal/node"             : "^0.0.1",
+        "@ecmal/http"             : "^0.0.1",
+        "@ecmal/gapi"             : "^0.0.1",
+        "@ecmal/react"            : "^0.0.1"
     }
 }

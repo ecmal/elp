@@ -1,6 +1,6 @@
 {
     "name"                        : "@ecmal/gapi",
-    "version"                     : "0.0.1",
+    "version"                     : "0.0.3",
     "description"                 : "Ecmal Google APIs Library",
     "license"                     : "UNLICENSED",
     "author"                      : "Mamble Inc. <ecmal@mamble.co>",
