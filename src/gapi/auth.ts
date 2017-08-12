@@ -18,13 +18,21 @@ export interface GoogleAuthSession {
 }
 
 export class GoogleAuth {
+    protected static toBase64Url(input: any) {
+        let data: any = input;
+        if (typeof data == 'string') {
+            data = new Buffer(input, 'utf8');
+        }
+        return data.toString('base64')
+            .replace(/=/g, "")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_");
+    }
+
     private keyPath;
     private keyJson;
     readonly options: GoogleApiOptions;
     readonly session: GoogleAuthSession;
-    public get header() {
-        return `${this.session.token_type} ${this.session.access_token}`
-    }
     constructor(readonly api: GoogleApiBase) {
         Object.defineProperty(this, 'options', {
             value: api.options
@@ -36,6 +44,9 @@ export class GoogleAuth {
                 expires_in: 0
             }
         });
+        if(!this.options.project ){
+            this.options.project = process.env.GCLOUD_PROJECT
+        }
         if(this.getKeyPath()){
             this.getKeyJson();
         }
@@ -47,16 +58,19 @@ export class GoogleAuth {
         }
         file = this.options.keyFile;
         if (file && Fs.existsSync(file)) {
-            return this.keyPath=file;
-        } else 
-        if(this.options.keyFile){
-            console.info(`Options Key File Not Found ${file || ''}`);
+            if(Fs.existsSync(file)){
+                return this.keyPath=file;
+            }else{
+                console.info(`Options Key File Not Found ${file || ''}`);
+            }
         }
         file = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        if (file && Fs.existsSync(file)) {
-            return this.keyPath=file;
-        } else {
-            console.info(`Env Key File Not Found ${file || ''}`);
+        if (file) {
+            if(Fs.existsSync(file)){
+                return this.keyPath=file;
+            }else{
+                console.info(`Env Key File Not Found ${file || ''}`);
+            }
         }
     }
     protected getKeyJson() {
@@ -70,19 +84,9 @@ export class GoogleAuth {
         }
         return this.keyJson=json;
     }
-    protected static toBase64Url(input: any) {
-        let data: any = input;
-        if (typeof data == 'string') {
-            data = new Buffer(input, 'utf8');
-        }
-        return data.toString('base64')
-            .replace(/=/g, "")
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_");
-    }
     protected getAssertion(scopes: string[]) {
         let key = this.getKeyJson();
-        let head = GoogleAuth.toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }))
+        let head = GoogleAuth.toBase64Url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
         let body = GoogleAuth.toBase64Url(JSON.stringify({
             iss: key.client_id,
             sub: key.user_email || key.client_email,
@@ -97,7 +101,7 @@ export class GoogleAuth {
         sign.end();
         return `${head}.${body}.${GoogleAuth.toBase64Url(sign.sign(key.private_key))}`;
     }
-    public async getSession(cached = true): Promise<GoogleAuthSession> {
+    protected async getSession(cached = true): Promise<GoogleAuthSession> {
         let session = this.session;
         if (!cached) {
             session.access_token = null;
@@ -106,24 +110,38 @@ export class GoogleAuth {
             return this.session;
         } else {
             let scopes: string[] = this.options.scopes;
-            session = await this.tryGetJwtSession(scopes);
-            if (session) {
-                Object.assign(this.session, session);
-                return this.session
-            } else {
-                console.info('JWT Auth Failed')
+
+            if(process.env.GCLOUD_PROJECT){
+                session = await this.tryGetGceSession(scopes);
+                if (session) {
+                    return Object.assign(this.session, session);
+                } else {
+                    console.info('GCE Auth Failed')
+                }
             }
-            session = await this.tryGetGceSession(scopes);
+
+            if(this.getKeyPath()){
+                session = await this.tryGetJwtSession(scopes);
+                if (session) {
+                    Object.assign(this.session, session);
+                    return this.session
+                } else {
+                    console.info('JWT Auth Failed')
+                }
+            }
+
+            session = await this.tryGetCmdSession(scopes);
             if (session) {
-                console.info("UPDATE",session);
                 return Object.assign(this.session, session);
             } else {
-                console.info('GCE Auth Failed')
+                console.info('CMD Auth Failed')
             }
+
+
         }
         return session || null;
     }
-    public async getMeta(version = 'v1', path = '', query = {}) {
+    protected async getMeta(version = 'v1', path = '', query = {}) {
         let search = Qs.encode(Object.assign({ recursive: true }, query));
         let req = this.api.request({
             protocol: "http:",
@@ -144,13 +162,32 @@ export class GoogleAuth {
             throw ex;
         }
     }
-    public async refresh() {
-        this.session.access_token = null;
-        await this.getSession();
-        return this.header;
+    protected async tryGetCmdSession(scopes) {
+        function execute(cmd){
+            return require('child_process').execSync(cmd,{
+                encoding:'utf8'
+            }).replace(/[\r\n]/g, '');
+        }
+        try {
+            let token = execute("gcloud auth application-default print-access-token");
+            if(token){
+                if (!this.options.project) {
+                    this.options.project = execute("gcloud config get-value project");
+                }
+            }
+            return {
+                access_token: token,
+                expires_in: 3600,
+                token_type: 'Bearer'
+            };
+        } catch (ex) {
+            console.info(ex.message);
+            return null;
+        }
     }
     protected async tryGetGceSession(scopes) {
         try {
+
             return await this.getMeta('v1', 'instance/service-accounts/default/token');
         } catch (ex) {
             console.info(ex.message);
@@ -178,5 +215,12 @@ export class GoogleAuth {
             console.info(ex.stack || ex.message);
             return false;
         }
+    }
+    public async authorize(headers?,cached:boolean=true){
+        await this.getSession(cached);
+        if(headers){
+            headers.authorization = `${this.session.token_type} ${this.session.access_token}`
+        }
+        return this.session;
     }
 }

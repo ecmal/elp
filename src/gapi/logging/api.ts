@@ -188,7 +188,7 @@ export class GoogleLogging extends GoogleApiBase {
         }
         return this.getLog('PROJECT', labels.project_id, name, {
             type    : "project",
-            labels  : labels
+            labels  : {project_id:labels.project_id}
         }, labels);
     }
 

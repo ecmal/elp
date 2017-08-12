@@ -95,7 +95,7 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
                 complete: [],
                 failed: []
             };
-            for (var i in status) {
+            for (let i in status) {
                 let ackId = status[i];
                 if (ackId == 'failed' || ackId == 'complete') {
                     statuses[ackId].push(i);
@@ -118,26 +118,29 @@ export class PubsubSubscription extends PubsubEntity implements Subscription {
             return new Promise(accept => setTimeout(accept, sec))
         };
         let request = async () => {
-            //console.info("POLL");
-            let result = await this.api.resource.subscriptions.pull(this.subscriptionId,{
-                maxMessages: 1,
-                returnImmediately: false
-            });
-            if (result.receivedMessages) {
-                let promises = result.receivedMessages.map(item => {
-                    status[item.ackId] = 'pending';
-                    try {
-                        let message = new PubsubMessage(this, item.message);
-                        return this.handler(message).then(
-                            r => (status[item.ackId] = 'complete'),
-                            e => (status[item.ackId] = 'failed')
-                        )
-                    } catch (ex) {
-                        status[item.ackId] = 'failed'
-                    }
-
+            try{
+                let result = await this.api.resource.subscriptions.pull(this.subscriptionId,{
+                    maxMessages: 1,
+                    returnImmediately: false
                 });
-                await commit(await Promise.all(promises))
+                if (result.receivedMessages) {
+                    let promises = result.receivedMessages.map(item => {
+                        status[item.ackId] = 'pending';
+                        try {
+                            let message = new PubsubMessage(this, item.message);
+                            return this.handler(message).then(
+                                r => (status[item.ackId] = 'complete'),
+                                e => (status[item.ackId] = 'failed')
+                            )
+                        } catch (ex) {
+                            status[item.ackId] = 'failed'
+                        }
+
+                    });
+                    await commit(await Promise.all(promises))
+                }
+            }catch(ex){
+                console.error(ex);
             }
         };
         while (true) {
@@ -161,14 +164,14 @@ export class PubsubTopic extends PubsubEntity implements Topic {
             }
             if (!Buffer.isBuffer(m.data)) {
                 if (typeof m.data == 'object') {
-                    m.data = Buffer.from(JSON.stringify(m.data), 'utf8')
+                    m.data = Buffer.from(JSON.stringify(m.data), 'utf8');
                     m.attributes['content-type'] = 'application/json'
                 } else
                     if (typeof m.data == 'string') {
-                        m.data = Buffer.from(JSON.stringify(m.data), 'utf8')
+                        m.data = Buffer.from(JSON.stringify(m.data), 'utf8');
                         m.attributes['content-type'] = 'plain/text'
                     } else {
-                        m.data = Buffer.from(JSON.stringify({}), 'utf8')
+                        m.data = Buffer.from(JSON.stringify({}), 'utf8');
                         m.attributes['content-type'] = 'application/json'
                     }
             } else {
@@ -180,10 +183,7 @@ export class PubsubTopic extends PubsubEntity implements Topic {
     }
     public async subscribe(name: string, handler: (message: PubsubMessage) => Promise<any>, subscription?: Subscription) {
         subscription = Object.assign({ topic: this.name }, subscription);
-        let result, params = {
-            subscriptionId: name,
-            projectId: this.projectId,
-        };
+        let result;
         try {
             
             result = await this.api.resource.subscriptions.create(name,subscription);

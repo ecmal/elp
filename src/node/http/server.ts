@@ -10,8 +10,8 @@ export class Server {
 
     protected value: any;
     constructor() {
-        Object.defineProperty(this, 'value', { value: new HTTP.Server(), enumerable:false })
-        Object.defineProperty(this.value, 'value', { value: this })
+        Object.defineProperty(this, 'value', { value: new HTTP.Server(), enumerable:false });
+        Object.defineProperty(this.value, 'value', { value: this });
         this.value.on('request', (req, res) => {
             this.onRequest(new ServerRequest(req), new ServerResponse(res));
         });
@@ -23,12 +23,12 @@ export class Server {
                 this.value.removeListener('listening', onOk);
                 this.value.removeListener('error', onKo);
                 accept({ host, port });
-            })
+            });
             this.value.on('error', onKo = (error) => {
                 this.value.removeListener('listening', onOk);
                 this.value.removeListener('error', onKo);
                 reject(error);
-            })
+            });
             this.value.listen(port, host);
         })
     }
@@ -39,12 +39,12 @@ export class Server {
                 this.value.removeListener('close', onOk);
                 this.value.removeListener('error', onKo);
                 accept();
-            })
+            });
             this.value.on('error', onKo = (error) => {
                 this.value.removeListener('close', onOk);
                 this.value.removeListener('error', onKo);
                 reject(error);
-            })
+            });
             this.value.close();
         })
     }

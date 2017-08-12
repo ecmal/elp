@@ -1,19 +1,30 @@
 {
-    "name":"@ecmal/node",
-    "version":"0.1.0",
-    "compilerOptions": {
-        "module": "system",
-        "target": "es5",
-        "declaration": true,
-        "sourceMap": true,
-        "outDir": "../../out",
-        "noEmitHelpers": true,
-        "importHelpers": true,
-        "stripInternal": true,
-        "baseUrl": "../../out",
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "downlevelIteration": true,
-        "sourceRoot": "."
+    "name"                        : "@ecmal/node",
+    "version"                     : "0.0.2",
+    "description"                 : "Ecmal NodeJs Wrappers",
+    "license"                     : "UNLICENSED",
+    "author"                      : "Mamble Inc. <ecmal@mamble.co>",
+    "repository"                  : "https://github.com/ecmal/elp.git",
+    "contributors"                : ["Sergey Mamyan <sergey@mamble.co>"],
+    "homepage"                    : "https://github.com/ecmal/elp",
+    "bugs"                        : "https://github.com/ecmal/elp/issues",
+    "keywords"                    : ["typescript","ecmal","node"],
+    "types"                       : "index.d.ts",
+    "compilerOptions"             : {
+        "module"                  : "system",
+        "target"                  : "es5",
+        "declaration"             : true,
+        "sourceMap"               : true,
+        "sourceRoot"              : ".",
+        "baseUrl"                 : "../../out",
+        "outDir"                  : "../../out",
+        "noEmitHelpers"           : true,
+        "importHelpers"           : true,
+        "stripInternal"           : true,
+        "emitDecoratorMetadata"   : true,
+        "experimentalDecorators"  : true
+    },
+    "dependencies"                : {
+        "@ecmal/runtime"          : "^0.0.1"
     }
 }

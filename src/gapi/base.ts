@@ -120,6 +120,7 @@ export class GoogleApiError extends Error {
     readonly message: string;
     readonly errors: any[];
     constructor(error: {
+        component:string,
         code: number,
         message: string,
         errors: any[]
@@ -275,15 +276,15 @@ export class GoogleApiBase {
             options.headers['content-type'] = type;
             options.headers['content-size'] = body.length;
         }
-        await this.auth.getSession();
-        options.headers['authorization'] = this.auth.header;
+
         let sendRequest = async () => {
             let req = this.request(options);
             let res = await req.send(body);
             let obj = await res.json();
             //console.info(res.statusCode,res.statusMessage,obj);
             if (obj.error) {
-                //console.info(options.path,JSON.stringify(obj,null,2));
+                obj.error.component = this.constructor.name;
+                Object.assign(obj.error,options);
                 throw new GoogleApiError(obj.error);
             } else {
                 return obj;
@@ -291,10 +292,11 @@ export class GoogleApiBase {
         };
         let result = null;
         try {
+            await this.auth.authorize(options.headers);
             result = await sendRequest();
         } catch (ex) {
             if (ex.code == 401 || ex.code == 403) {
-                options.headers.authorization = await this.auth.refresh();
+                await this.auth.authorize(options.headers,false);
                 result = await sendRequest();
             } else {
                 throw ex;
