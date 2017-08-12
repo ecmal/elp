@@ -1,36 +1,45 @@
 {
-    "name"                  : "@ecmal/elp",
-    "version"               : "2.5.2-elp",
-    "description"           : "Ecmal Typescript Compiler",
-    "license"               : "UNLICENSED",
-    "author"                : "Mamble Inc. <ecmal@mamble.co>",
-    "repository"            : "https://github.com/ecmal/elp.git",
-    "contributors"          : ["Sergey Mamyan <sergey@mamble.co>"],
-    "homepage"              : "https://github.com/ecmal/elp",
-    "bugs"                  : "https://github.com/ecmal/elp/issues",
-    "keywords"              : ["typescript","ecmal","compiler"],
-    "types"                 : "lib/index.d.ts",
-    "bin"                   : {
-        "elc"               : "./bin/elc"
+    "name": "@ecmal/elp",
+    "version": "2.5.2-elp",
+    "description": "Ecmal Typescript Compiler",
+    "license": "UNLICENSED",
+    "author": "Mamble Inc. <ecmal@mamble.co>",
+    "repository": "https://github.com/ecmal/elp.git",
+    "contributors": [
+        "Sergey Mamyan <sergey@mamble.co>"
+    ],
+    "homepage": "https://github.com/ecmal/elp",
+    "bugs": "https://github.com/ecmal/elp/issues",
+    "keywords": [
+        "typescript",
+        "ecmal",
+        "compiler"
+    ],
+    "types": "lib/index.d.ts",
+    "bin": {
+        "elc": "./bin/elc"
     },
-    "scripts"               : {
-        "start"             : "node ./test/project.js",
-        "typescript"        : "ts-node --fast tools/patch.ts",
-        "react"             : "ts-node --fast tools/react.ts",
-        "compile"           : "node ./lib/tsc.js",
-        "compile-gapi"      : "npm run compile -- -p ./src/gapi",
-        "compile-runtime"   : "npm run compile -- -p ./src/runtime",
-        "compile-node"      : "npm run compile -- -p ./src/node",
-        "compile-http"      : "npm run compile -- -p ./src/http",
-        "compile-project"   : "npm run compile -- -p ./src/project",
-        "compile-all"       : "npm run compile-runtime && npm run compile-node && npm run compile-http && npm run compile-gapi",
-        "clean"             : "rm -rf out && rm -rf lib",
-        "build"             : "npm run typescript && npm run react && npm run compile-all",
-        "build-project"     : "npm run build && npm run compile-project",
-        "watch-gapi"        : "npm run compile-gapi -- -w",
-        "watch-project"     : "npm run compile-project -- -w",
-        "watch-runtime"     : "npm run compile-runtime -- -w",
-        "watch-http"        : "npm run compile-http -- -w",
-        "watch-node"        : "npm run compile-node -- -w"
+    "scripts": {
+        "start": "node ./test/project.js",
+        "typescript": "ts-node --fast tools/patch.ts",
+        "react": "ts-node --fast tools/react.ts",
+        "compile": "node ./lib/tsc.js",
+        "compile-gapi": "npm run compile -- -p ./src/gapi",
+        "compile-runtime": "npm run compile -- -p ./src/runtime",
+        "compile-node": "npm run compile -- -p ./src/node",
+        "compile-http": "npm run compile -- -p ./src/http",
+        "compile-project": "npm run compile -- -p ./src/project",
+        "compile-all": "npm run compile-runtime && npm run compile-node && npm run compile-http && npm run compile-gapi",
+        "clean": "rm -rf out && rm -rf lib",
+        "build": "npm run typescript && npm run react && npm run compile-all",
+        "build-project": "npm run build && npm run compile-project",
+        "watch-gapi": "npm run compile-gapi -- -w",
+        "watch-project": "npm run compile-project -- -w",
+        "watch-runtime": "npm run compile-runtime -- -w",
+        "watch-http": "npm run compile-http -- -w",
+        "watch-node": "npm run compile-node -- -w"
+    },
+    "dependencies": {
+        "@ecmal/runtime": "0.0.1"
     }
 }

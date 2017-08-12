@@ -4,7 +4,7 @@ import {process} from "./utils/node";
 
 declare const __dirname: string;
 const reactVersion = '15.6.1';
-const libPath = Files.resolve(__dirname, '../out/@ecmal/react');
+const libPath = Files.resolve(__dirname, '../node_modules/@ecmal/react');
 const dirName = Files.resolve(__dirname, './react');
 
 const tsBase = (p, v, f) => `https://unpkg.com/${p}@${v}/dist/${f}.min.js`;

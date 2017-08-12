@@ -19,8 +19,8 @@
         "declaration"       : true,
         "sourceMap"         : true,
         "sourceRoot"        : ".",
-        "baseUrl"           : "../../out",
-        "outDir"            : "../../out",
+        "baseUrl"           : "../../node_modules",
+        "outDir"            : "../../node_modules",
         "noEmitHelpers"     : true,
         "importHelpers"     : true,
         "stripInternal"     : true

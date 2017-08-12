@@ -11,13 +11,13 @@ let gapi = new GoogleApi({
     scopes: [
         GoogleApi.SCOPES.LOGGING_ADMIN
     ]
-})
+});
 
 @Route('/api/v1/session')
 class SessionApiIndexResource {
     @GET
     async index() {
-        return gapi.logging.auth.getSession()
+        return gapi.logging.auth.session;
     }
 }
 
@@ -25,7 +25,7 @@ class SessionApiIndexResource {
 class MetadataApiIndexResource {
     @GET
     async index() {
-        return gapi.logging.auth.getMeta()
+        return gapi.logging.auth.session;
     }
 }
 
