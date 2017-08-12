@@ -28,7 +28,7 @@ export interface ClockState {
 class Clock extends React.Component {
     public state: ClockState;
     private timerID: any;
-    setState;
+
     constructor(props) {
         super(props);
         this.state = { date: new Date() };

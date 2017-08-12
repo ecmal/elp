@@ -5,7 +5,7 @@ import {process} from "./utils/node";
 declare const __dirname: string;
 const reactVersion = '15.6.1';
 const libPath = Files.resolve(__dirname, '../out/@ecmal/react');
-
+const dirName = Files.resolve(__dirname, './react');
 
 const tsBase = (p, v, f) => `https://unpkg.com/${p}@${v}/dist/${f}.min.js`;
 
@@ -34,12 +34,18 @@ async function compileReactServer() {
     source = wrap("@ecmal/react/server",["@ecmal/react/react"], source);
     Files.write(Files.resolve(libPath, 'server.js'),source);
 }
+async function copyDefinitions() {
+    Files.readDirSync(dirName).forEach(f=>{
+        Files.write(Files.resolve(libPath,f),Files.read(Files.resolve(dirName,f)));
+    });
+}
 
 async function main(){
     try{
         await compileReactCore();
         await compileReactDom();
         await compileReactServer();
+        await copyDefinitions();
     }catch(ex){
         console.error(ex);
     }

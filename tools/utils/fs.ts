@@ -12,6 +12,9 @@ export const Files = {
     },
     read(path:string):string{
         return fs.readFileSync(path,'utf8');
+    },
+    readDirSync(path:string):string[]{
+        return fs.readdirSync(path)
     }
 };
 
