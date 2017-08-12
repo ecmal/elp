@@ -24,7 +24,7 @@ pids
 # Dependency directories
 node_modules/
 jspm_packages/
-
+package-lock.json
 # Output of 'npm pack'
 *.tgz
 
