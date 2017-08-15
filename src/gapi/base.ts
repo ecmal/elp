@@ -21,6 +21,9 @@ export interface GoogleRequest {
     };
 }
 export class GoogleApiResponse {
+    get headers(){
+        return this.socket.headers;
+    }
 
     constructor(
         readonly request:GoogleApiRequest,
@@ -296,7 +299,7 @@ export class GoogleApiBase {
             result = await sendRequest();
         } catch (ex) {
             if (ex.code == 401 || ex.code == 403) {
-                await this.auth.authorize(options.headers,false);
+                await this.auth.authorize(options.headers,true);
                 result = await sendRequest();
             } else {
                 throw ex;

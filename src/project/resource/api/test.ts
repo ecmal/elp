@@ -7,10 +7,9 @@ import { GoogleApi } from "@ecmal/gapi/api";
 declare const process;
 
 
-let gapi = new GoogleApi({
-    scopes: [
-        GoogleApi.SCOPES.LOGGING_ADMIN
-    ]
+let gapi;
+new GoogleApi({}).auth().then(r=>{
+    gapi = r;
 });
 
 @Route('/api/v1/session')
@@ -25,7 +24,7 @@ class SessionApiIndexResource {
 class MetadataApiIndexResource {
     @GET
     async index() {
-        return gapi.logging.auth.session;
+        return gapi.logging.auth.meta();
     }
 }
 
@@ -33,6 +32,14 @@ class MetadataApiIndexResource {
 class LogsApiResource {
     @GET
     async index() {
-        return gapi.logging.listProjectLogs()
+        return gapi.logging.getLogs()
+    }
+}
+
+@Route('/api/v1/logs/descriptors')
+class LogsDescriptorsApiResource {
+    @GET
+    async index() {
+        return gapi.logging.getMonitoredResourceDescriptors()
     }
 }

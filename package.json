@@ -14,7 +14,9 @@
         "elc"               : "./bin/elc"
     },
     "scripts"               : {
-        "start"             : "node ./test/project.js",
+        "elr"               : "elr",
+        "bundle"            : "elr @ecmal/runtime/bin/pkg @vendor/project/server @vendor/project/client ./package.js",
+        "start"             : "elr @vendor/project/server",
         "typescript"        : "ts-node --fast tools/patch.ts",
         "react"             : "ts-node --fast tools/react.ts",
         "compile"           : "node ./lib/tsc.js",

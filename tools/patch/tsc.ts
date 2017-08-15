@@ -49,14 +49,14 @@ namespace ts {
     let FS = require('fs');
     let directoryPath = (path) => {
         return ts['getDirectoryPath'](path)
-    }
+    };
     let relativePath = (path, base) => {
         return ts['convertToRelativePath'](path, base, f => f)
-    }
+    };
 
     let resolvePath = (base, path) => {
         return ts['normalizePath'](ts['combinePaths'](base, path))
-    }
+    };
     function parseJsonSourceFileConfigFileContent(sourceFile: JsonSourceFile, host: any, basePath: string, existingOptions?: any, configFileName?: string, resolutionStack?: Path[], extraFileExtensions?: JsFileExtensionInfo[]): ParsedCommandLine {
         let raw = JSON.parse(sourceFile.text);
         if(raw.resources){

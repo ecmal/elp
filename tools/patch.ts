@@ -36,7 +36,7 @@ function rewriteLines(lines:string[]){
 
 function compileTsc() {
     let oldPath = Files.resolve(tscPath, 'tsc.js');
-    let newPath = Files.resolve(__dirname, '../lib/tsc.js')
+    let newPath = Files.resolve(__dirname, '../lib/tsc.js');
     let source = Files.read(oldPath).trim();
     let patch = Files.read(Files.resolve(__dirname, './patch/tsc.ts'));
     let lines = source.split('\n');
@@ -114,24 +114,24 @@ function compileLib() {
     files.push(Files.read(Files.resolve(__dirname, './patch/lib.d.ts')));
 
 
-    let source = files.join('\n')
+    let source = files.join('\n');
     source = source.split('\n').filter(l => {
         return !l.trim().match(/^\/\/\/(.*)$/)
-    }).join('\n')
+    }).join('\n');
     source = source.replace(/\r/gm, '').replace(/\n+/gm, '\n');
     source = `/// <reference no-default-lib="true"/>\n${source}`;
 
-    let newPath = Files.resolve(__dirname, '../lib/lib.d.ts')
+    let newPath = Files.resolve(__dirname, '../lib/lib.d.ts');
     //console.info(newPath);
     Files.write(newPath, source);
 }
 function compileTs() {
     let oldPath = Files.resolve(tscPath, 'typescript.js');
-    let newPath = Files.resolve(__dirname, '../out/@ecmal/typescript/index.js')
+    let newPath = Files.resolve(__dirname, '../node_modules/@ecmal/typescript/index.js');
     let source = Files.read(oldPath).trim();
     let patch = Files.read(Files.resolve(__dirname, './patch/tsc.ts'));
     let lines = source.split('\n');
-    lines = rewriteLines(lines)
+    lines = rewriteLines(lines);
     source = lines.join('\n');
     source = [
         'System.register("@ecmal/typescript/index",[],function(exporter,module,require,exports,__filename,__dirname){',
@@ -145,7 +145,7 @@ function compileTs() {
 }
 function compileTsd() {
     let oldPath = Files.resolve(tscPath, 'typescript.d.ts');
-    let newPath = Files.resolve(__dirname, '../out/@ecmal/typescript/index.d.ts')
+    let newPath = Files.resolve(__dirname, '../node_modules/@ecmal/typescript/index.d.ts');
     let source = Files.read(oldPath).trim();
     let lines = source.split('\n');
     source = lines.map(l=>{
