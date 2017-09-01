@@ -1,18 +1,23 @@
 {
-    "name"                        : "@ecmal/http",
-    "version"                     : "0.0.4",
-    "description"                 : "Ecmal Http Library",
+    "name"                        : "@vendor/test",
+    "version"                     : "0.0.3",
+    "description"                 : "Ecmal Sample Project",
     "license"                     : "UNLICENSED",
     "author"                      : "Mamble Inc. <ecmal@mamble.co>",
     "repository"                  : "https://github.com/ecmal/elp.git",
     "contributors"                : ["Sergey Mamyan <sergey@mamble.co>"],
     "homepage"                    : "https://github.com/ecmal/elp",
     "bugs"                        : "https://github.com/ecmal/elp/issues",
-    "keywords"                    : ["typescript","ecmal","http"],
+    "keywords"                    : ["typescript","ecmal","node"],
     "types"                       : "index.d.ts",
+    "resources"                   : {
+        "png"                     : "image/png",
+        "html"                    : "text/html"
+    },
     "compilerOptions"             : {
         "module"                  : "system",
-        "target"                  : "es5",
+        "target"                  : "es2017",
+        "jsx"                     : "react",
         "declaration"             : true,
         "sourceMap"               : true,
         "sourceRoot"              : ".",
@@ -26,6 +31,9 @@
     },
     "dependencies"                : {
         "@ecmal/runtime"          : "^0.0.1",
-        "@ecmal/node"             : "^0.0.2"
+        "@ecmal/node"             : "^0.0.1",
+        "@ecmal/http"             : "^0.0.1",
+        "@ecmal/gapi"             : "^0.0.1",
+        "@ecmal/react"            : "^0.0.1"
     }
 }

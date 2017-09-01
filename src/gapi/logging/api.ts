@@ -27,7 +27,6 @@ export interface LogHttpRequest {
    cacheValidatedWithOriginServer?: boolean,
    cacheFillBytes?: string,
 }
-
 export interface LogEntry {
     insertId?       : string;
     timestamp?      : string;
@@ -41,7 +40,6 @@ export interface LogEntry {
         message?    : string;
     }
 }
-
 export class GoogleLog {
     readonly logging : GoogleLogging;
     readonly parentType : GoogleLogParent;
@@ -159,21 +157,27 @@ export class GoogleLogging extends GoogleApiBase {
             body        : params
         });
     }
-    async listProjectLogs(projectId?:string){
-        projectId = projectId||this.options.project;
+    async getMonitoredResourceDescriptors(){
         let result = await this.call({
             method: 'GET',
             host: 'logging.googleapis.com',
-            path: `/v2/projects/${projectId}/logs`,
+            path: `/v2/monitoredResourceDescriptors`,
+        });
+        return result.resourceDescriptors;
+    }
+    async getLogs(){
+        let result = await this.call({
+            method: 'GET',
+            host: 'logging.googleapis.com',
+            path: `/v2/projects/${this.options.project}/logs`,
         });
         return result.logNames.map(l => decodeURIComponent(l.split('/').pop()));
     }
-    async deleteProjectLog(logId: string, projectId?: string) {
-        projectId = projectId || this.options.project;
+    async deleteLog(name: string) {
         return await this.call({
             method: 'DELETE',
             host: 'logging.googleapis.com',
-            path: `/v2/projects/${projectId}/logs/${encodeURIComponent(logId)}`,
+            path: `/v2/projects/${this.options.project}/logs/${encodeURIComponent(name)}`,
         })
     }
     public getLog(type: GoogleLogParent, parentId: string, logId: string, resource: any, labels: any = {}): GoogleLog {

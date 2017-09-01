@@ -21,6 +21,7 @@
         "compile-gapi"      : "npm run compile -- -p ./src/gapi",
         "compile-runtime"   : "npm run compile -- -p ./src/runtime",
         "compile-node"      : "npm run compile -- -p ./src/node",
+        "compile-test"      : "npm run compile -- -p ./src/test",
         "compile-http"      : "npm run compile -- -p ./src/http",
         "compile-project"   : "npm run compile -- -p ./src/project",
         "compile-all"       : "npm run compile-runtime && npm run compile-node && npm run compile-http && npm run compile-gapi",

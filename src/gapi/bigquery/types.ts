@@ -236,7 +236,7 @@ export interface Table {
 }
 export interface TimePartitioning {
     type: "DAY",
-    expirationMs: number
+    expirationMs?: number
 }
 export interface StreamingBuffer {
     estimatedRows: number,

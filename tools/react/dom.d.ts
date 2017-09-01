@@ -1,5 +1,3 @@
-export as namespace ReactDOM;
-
 import {
     ReactInstance, Component, ComponentState,
     ReactElement, SFCElement, CElement,

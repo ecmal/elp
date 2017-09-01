@@ -4,6 +4,10 @@ import { GoogleApiOptions } from "./api";
 import { GoogleAuth } from "./auth";
 import { Buffer } from "@ecmal/node/buffer";
 
+let HTTP = require('http');
+let HTTPS = require('https');
+let STREAM = require('stream');
+
 export interface GoogleRequest {
     protocol?: "http:" | "https:";
     host?: string;
@@ -15,12 +19,15 @@ export interface GoogleRequest {
     body?: any;
     file?: string;
     media?: {
-        contentType: string;
-        contentSize: number;
-        contentBody: Buffer;
+        contentType?: string;
+        contentSize?: number;
+        contentBody?: Buffer;
     };
 }
 export class GoogleApiResponse {
+    get headers(){
+        return this.socket.headers;
+    }
 
     constructor(
         readonly request:GoogleApiRequest,
@@ -44,7 +51,12 @@ export class GoogleApiResponse {
         let json = {};
         let text = await this.text();
         if (text && text.length) {
-            json = JSON.parse(text);
+            try{
+                json = JSON.parse(text);
+            }catch(ex){
+                ex.message = `${ex.message}\n${text}`;
+                throw ex;
+            }
         }
         return json;
     }
@@ -81,8 +93,7 @@ export class GoogleApiRequest {
         return this.headers[key];
     }
 
-    async send(text?: string | Buffer): Promise<GoogleApiResponse> {
-
+    async send(text?:any): Promise<GoogleApiResponse> {
         this.agent = this.api.getAgent(this.protocol);
         switch (this.protocol) {
             case 'http:': {
@@ -96,15 +107,29 @@ export class GoogleApiRequest {
         }
 
         return new Promise<GoogleApiResponse>((accept,reject)=>{
-            let options = Object.assign({},this.options);
+            let options = Object.assign({agent:this.agent},this.options);
             if(options.query){
                 options.path = `${options.path}?${Qs.encode(options.query)}`
+            }
+            if(text && !isStream(text) && !Buffer.isBuffer(text) && typeof text != 'string'){
+                if(!options.headers['content-type']){
+                    options.headers['content-type'] = 'application/json'
+                }
+                text = JSON.stringify(text)
             }
             this.socket = this.transport.request(options,res=>{
                 accept(new GoogleApiResponse(this,res));
             })
             this.socket.on('error',error=>reject(error));
-            this.socket.end(text);
+            if(text){
+                if(isStream(text)){
+                    text.pipe(this.socket);
+                }else{
+                    this.socket.end(text)
+                }
+            }else{
+                this.socket.end()
+            }
         })
     }
 
@@ -160,22 +185,20 @@ export class GoogleApiBase {
         switch (protocol) {
             case 'http:': {
                 if (!this.httpAgent) {
-                    let http = require('http');
                     if (this.options.agent) {
-                        this.httpAgent = new http.Agent(this.options.agent);
+                        this.httpAgent = new HTTP.Agent(this.options.agent);
                     } else {
-                        this.httpAgent = http.globalAgent;
+                        this.httpAgent = HTTP.globalAgent;
                     }
                 }
                 return this.httpAgent;
             }
             case 'https:': {
                 if (!this.httpsAgent) {
-                    let https = require('https');
                     if (this.options.agent) {
-                        this.httpsAgent = new https.Agent(this.options.agent);
+                        this.httpsAgent = new HTTPS.Agent(this.options.agent);
                     } else {
-                        this.httpsAgent = https.globalAgent;
+                        this.httpsAgent = HTTPS.globalAgent;
                     }
                 }
                 return this.httpsAgent;
@@ -219,7 +242,7 @@ export class GoogleApiBase {
                 let headers = new Buffer([
                     `--${boundry}`,
                     `content-type: ${part.contentType}`,
-                    `content-length: ${part.contentSize}`,
+                    //`content-length: ${part.contentSize}`,
                     '', ''
                 ].join('\r\n'));
 
@@ -231,7 +254,7 @@ export class GoogleApiBase {
             media.contentSize = media.contentBody.length;
             return media;
         }
-        let body: Buffer = void 0;
+        let body: Buffer = options.body;
         let type: string = void 0;
 
         if (options.media) {
@@ -251,31 +274,31 @@ export class GoogleApiBase {
             delete options.media;
         }
 
-        if (options.body) {
-            body = options.body;
-            if (Buffer.isBuffer(body)) {
-                type = type || 'application/octet-stream';
-            } else
-            if (typeof body == 'object') {
-                type = type || 'application/json';
-                body = new Buffer(JSON.stringify(body, null, 2));
-            } else {
-                type = type || 'text/plain';
-                body = new Buffer(String(body))
-            }
-        }
+        // if (options.body) {
+        //     body = options.body;
+        //     if (Buffer.isBuffer(body)) {
+        //         type = type || 'application/octet-stream';
+        //     } else
+        //     if (typeof body == 'object') {
+        //         type = type || 'application/json';
+        //         body = new Buffer(JSON.stringify(body, null, 2));
+        //     } else {
+        //         type = type || 'text/plain';
+        //         body = new Buffer(String(body))
+        //     }
+        // }
 
         if (!options.headers) {
             options.headers = {}
         }
         //console.info(options)
-        if (body) {
+       // if (body) {
             //console.info('======= BODY ====== {')
             //console.info(body.toString('utf8'));
             //console.info('======= BODY ====== }')
-            options.headers['content-type'] = type;
-            options.headers['content-size'] = body.length;
-        }
+            //options.headers['content-type'] = type;
+            //options.headers['content-size'] = body.length;
+        //}
 
         let sendRequest = async () => {
             let req = this.request(options);
@@ -296,7 +319,7 @@ export class GoogleApiBase {
             result = await sendRequest();
         } catch (ex) {
             if (ex.code == 401 || ex.code == 403) {
-                await this.auth.authorize(options.headers,false);
+                await this.auth.authorize(options.headers,true);
                 result = await sendRequest();
             } else {
                 throw ex;
@@ -305,4 +328,10 @@ export class GoogleApiBase {
         return result;
     }
 
+}
+
+function isStream (obj) {
+    return obj instanceof STREAM.Stream &&
+    typeof (obj as any)._read === 'function' &&
+    typeof (obj as any)._readableState === 'object';
 }

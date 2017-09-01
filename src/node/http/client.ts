@@ -7,11 +7,3 @@ export class Client {
     constructor(private url = 'https://github.com/Microsoft/TypeScript/pull/12346') { }
     read(){}
 }
-
-
-async function query(){
-    let client = new Client();
-    for await (const x of client) {
-
-    }
-}

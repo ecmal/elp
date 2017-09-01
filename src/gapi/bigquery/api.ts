@@ -48,6 +48,9 @@ export class BigqueryTable extends BigqueryEntity implements Table {
         super(dataset.api);
         Object.defineProperty(this, 'dataset', { value: dataset })
     }
+    async load(){
+        return this.api.resource.tables.get({params:this.tableReference})
+    }
 }
 export class BigqueryDataset extends BigqueryEntity implements Dataset {
     readonly project: BigqueryProject;
@@ -181,6 +184,24 @@ export class BigqueryProject extends BigqueryEntity implements Project {
     }
     async runLoadJob(data:string|any[],config: LoadJobConfiguration): Promise<BigqueryLoadJob> {
         return new BigqueryLoadJob(this, config).run(data);
+    }
+    async importCsv(dataset:string,table:string,paths:string[],skipHeader:number=1){
+        return await this.api.resource.jobs.insert({
+            params  : { projectId: this.id },
+            body    : { configuration: {
+                load : {
+                    writeDisposition:"WRITE_TRUNCATE",
+                    sourceFormat:"CSV",
+                    sourceUris:paths,
+                    skipLeadingRows:skipHeader,
+                    destinationTable:{
+                        projectId:this.id,
+                        datasetId:dataset,
+                        tableId:table
+                    }
+                }
+            } }
+        });
     }
 }
 
@@ -356,7 +377,10 @@ export class GoogleBigquery extends GoogleApiBase {
         }
         return Object.getOwnPropertyNames(this.projects).map(k => this.projects[k]);
     }
-    async getProject(id: string) {
+    async getProject(id?: string) {
+        if(!id){
+            id = this.options.project;
+        }
         if (!this.projects) {
             await this.getProjects();
         }

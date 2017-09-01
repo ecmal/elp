@@ -1,22 +1,23 @@
 import {Meta} from "@ecmal/runtime/decorators";
 import {Mirror} from "@ecmal/runtime/reflect";
 
-import {GoogleApi} from "./api"
+import {GoogleApi,Scopes} from "./api"
 import { GoogleTrace, GoogleSpan } from "./trace/api";
 
 let ga = new GoogleApi({
-    keyFile: "/Users/Sergey/Documents/Keys/GC/mamble-poc.json",
+    key: "/Users/Sergey/Documents/Keys/GC/mamble-poc.json",
     project: "mamble-poc",
-    scopes: [
-        GoogleApi.SCOPES.LOGGING_ADMIN,
-        GoogleApi.SCOPES.LOGGING_READ,
-        GoogleApi.SCOPES.LOGGING_WRITE,
-        GoogleApi.SCOPES.TRACE_APPEND,
-        GoogleApi.SCOPES.TRACE_READONLY
+    scope: [
+        Scopes.LOGGING_ADMIN,
+        Scopes.LOGGING_READ,
+        Scopes.LOGGING_WRITE,
+        Scopes.TRACE_APPEND,
+        Scopes.TRACE_READONLY
     ]
-})
+});
 
-export function main(){
+export async function main(){
+    await ga.auth();
 
     let logger = ga.logging.getProjectLog('local');
     let tracer = ga.tracing.getTracer("RPC_CLIENT");
@@ -31,7 +32,7 @@ export function main(){
         //console.info('    download/schema', day);
         let root = span.child(`${job}/download/schema`).set({
             day: '01-01-2017'
-        })
+        });
         await wait(0,2);
         root.end();
     }
@@ -39,7 +40,7 @@ export function main(){
         //console.info('    download/report',day)
         let root = span.child(`${job}/download/report`).set({
             day: day
-        })
+        });
         await wait(0, 2);
         root.end();
     }
@@ -48,7 +49,7 @@ export function main(){
         //console.info('  download/day')
         let root = span.child(`${job}/download/day`).set({
             day: day
-        })
+        });
 
         await downloadSchema(job, day, root);
         await downloadReport(job, day, root);
