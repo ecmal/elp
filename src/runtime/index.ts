@@ -460,7 +460,9 @@ System.register("@ecmal/runtime", [], (exporter, module) => {
         }
     }
     function doInitRuntime() {
-        (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
+        if(typeof  Symbol.asyncIterator=='undefined'){
+            (Symbol as any).asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
+        }
         Object.setPrototypeOf(System, RuntimeSystem.prototype);
         RuntimeSystem.call(System);
     }

@@ -1,6 +1,6 @@
 {
     "name"                  : "@ecmal/runtime",
-    "version"               : "0.0.4",
+    "version"               : "0.0.6",
     "description"           : "Ecmal Runtime",
     "license"               : "UNLICENSED",
     "author"                : "Mamble Inc. <ecmal@mamble.co>",
